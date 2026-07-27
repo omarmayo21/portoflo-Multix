@@ -83,6 +83,26 @@ export const SanityProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
 
     loadData();
+
+    // Real-time live listener for instant Sanity Studio edits
+    let subscription: any;
+    if (isSanityConfigured()) {
+      try {
+        subscription = sanityClient
+          .listen('*[_type in ["project", "service", "testimonial", "faq", "websiteContent", "websiteSettings", "category", "landingPage"]]')
+          .subscribe(() => {
+            loadData();
+          });
+      } catch (e) {
+        console.warn('Real-time listener unavailable:', e);
+      }
+    }
+
+    return () => {
+      if (subscription) {
+        subscription.unsubscribe();
+      }
+    };
   }, []);
 
   return (

@@ -1,13 +1,17 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { ArrowUpRight, Sparkles, ShieldCheck, Zap } from 'lucide-react';
-import { useLanguage } from '../i18n/context';
+import { useSanity } from '../context/SanityContext';
 import { HeroCanvas } from '../components/3d/HeroCanvas';
 import { MagneticButton } from '../components/ui/MagneticButton';
 import { HeroBrowserShowcase } from '../components/ui/HeroBrowserShowcase';
 
 export const Hero: React.FC = () => {
-  const { t, direction } = useLanguage();
+  const { t, language } = useLanguage();
+  const { websiteContent } = useSanity();
+
+  const heroBadge = websiteContent?.heroBadge?.[language] || websiteContent?.heroBadge?.en || t('hero.badge');
+  const heroSubtitle = websiteContent?.heroSubtitle?.[language] || websiteContent?.heroSubtitle?.en || t('hero.subtitle');
 
   return (
     <section className="relative min-h-[92vh] lg:min-h-screen w-full flex items-center justify-center pt-28 pb-16 overflow-hidden bg-[#0F1D38] select-none">
@@ -34,7 +38,7 @@ export const Hero: React.FC = () => {
             >
               <Sparkles className="w-3.5 h-3.5 text-[#FF5E3A]" />
               <span className="text-xs font-bold font-heading uppercase tracking-widest text-slate-200">
-                {t('hero.badge')}
+                {heroBadge}
               </span>
             </motion.div>
 
@@ -75,7 +79,7 @@ export const Hero: React.FC = () => {
               transition={{ duration: 0.6, delay: 0.4 }}
               className="text-sm sm:text-base text-slate-300 font-normal leading-relaxed max-w-lg mx-auto lg:mx-0"
             >
-              {t('hero.subtitle')}
+              {heroSubtitle}
             </motion.p>
 
             {/* CTA Buttons */}
