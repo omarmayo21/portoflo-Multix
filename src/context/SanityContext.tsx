@@ -8,7 +8,6 @@ import {
   WEBSITE_CONTENT_QUERY,
   WEBSITE_SETTINGS_QUERY,
 } from '../lib/sanity/queries';
-import { projectsData } from '../data/projects';
 import { initAnalytics } from '../utils/analytics';
 import { captureUtmParameters } from '../utils/utmTracker';
 
@@ -23,17 +22,17 @@ interface SanityContextType {
 }
 
 const SanityContext = createContext<SanityContextType>({
-  projects: projectsData,
+  projects: [],
   services: [],
   testimonials: [],
   faqs: [],
   websiteContent: null,
   websiteSettings: null,
-  loading: false,
+  loading: true,
 });
 
 export const SanityProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [projects, setProjects] = useState<any[]>(projectsData);
+  const [projects, setProjects] = useState<any[]>([]);
   const [services, setServices] = useState<any[]>([]);
   const [testimonials, setTestimonials] = useState<any[]>([]);
   const [faqs, setFaqs] = useState<any[]>([]);
@@ -61,10 +60,11 @@ export const SanityProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           sanityClient.fetch(WEBSITE_SETTINGS_QUERY),
         ]);
 
-        if (projRes && projRes.length > 0) setProjects(projRes);
-        if (servRes && servRes.length > 0) setServices(servRes);
-        if (testRes && testRes.length > 0) setTestimonials(testRes);
-        if (faqRes && faqRes.length > 0) setFaqs(faqRes);
+        // Sanity is the single source of truth — no fallback data
+        setProjects(projRes || []);
+        setServices(servRes || []);
+        setTestimonials(testRes || []);
+        setFaqs(faqRes || []);
         if (contentRes) setWebsiteContent(contentRes);
 
         const effectivePixelId = settingsRes?.metaPixelId || '3969663239835262';
@@ -77,7 +77,7 @@ export const SanityProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           gtmId: settingsRes?.gtmId,
         });
       } catch (err) {
-        console.warn('Sanity fetch fallback active:', err);
+        console.warn('Sanity fetch error:', err);
         initAnalytics({ metaPixelId: '3969663239835262' });
       } finally {
         setLoading(false);
