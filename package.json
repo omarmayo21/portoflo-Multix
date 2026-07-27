@@ -19,6 +19,7 @@
     "@sanity/image-url": "^1.0.2",
     "@sanity/vision": "3.36.0",
     "@vercel/analytics": "^2.0.1",
+    "@vercel/speed-insights": "^2.0.0",
     "canvas-confetti": "^1.9.3",
     "clsx": "^2.1.1",
     "cssesc": "^3.0.0",
