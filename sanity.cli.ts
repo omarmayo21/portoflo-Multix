@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 import { defineCliConfig } from 'sanity/cli';
 
 export default defineCliConfig({
