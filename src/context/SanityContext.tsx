@@ -66,17 +66,19 @@ export const SanityProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         if (testRes && testRes.length > 0) setTestimonials(testRes);
         if (faqRes && faqRes.length > 0) setFaqs(faqRes);
         if (contentRes) setWebsiteContent(contentRes);
-        if (settingsRes) {
-          setWebsiteSettings(settingsRes);
-          // Initialize Meta Pixel, GA4, GTM dynamically from settings
-          initAnalytics({
-            metaPixelId: settingsRes.metaPixelId,
-            gaMeasurementId: settingsRes.gaMeasurementId,
-            gtmId: settingsRes.gtmId,
-          });
-        }
+
+        const effectivePixelId = settingsRes?.metaPixelId || '3969663239835262';
+        setWebsiteSettings(settingsRes || { metaPixelId: effectivePixelId });
+
+        // Initialize Meta Pixel, GA4, GTM dynamically from settings
+        initAnalytics({
+          metaPixelId: effectivePixelId,
+          gaMeasurementId: settingsRes?.gaMeasurementId,
+          gtmId: settingsRes?.gtmId,
+        });
       } catch (err) {
         console.warn('Sanity fetch fallback active:', err);
+        initAnalytics({ metaPixelId: '3969663239835262' });
       } finally {
         setLoading(false);
       }

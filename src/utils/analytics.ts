@@ -6,6 +6,8 @@ declare global {
   }
 }
 
+let activePixelId: string | null = null;
+
 export function initAnalytics(settings: {
   metaPixelId?: string;
   gaMeasurementId?: string;
@@ -13,27 +15,35 @@ export function initAnalytics(settings: {
 }) {
   if (typeof window === 'undefined') return;
 
-  // 1. Initialize Meta Pixel
-  if (settings.metaPixelId && !window.fbq) {
-    (function (f: any, b: any, e: any, v: any, n?: any, t?: any, s?: any) {
-      if (f.fbq) return;
-      n = f.fbq = function () {
-        n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments);
-      };
-      if (!f._fbq) f._fbq = n;
-      n.push = n;
-      n.loaded = !0;
-      n.version = '2.0';
-      n.queue = [];
-      t = b.createElement(e);
-      t.async = !0;
-      t.src = v;
-      s = b.getElementsByTagName(e)[0];
-      s.parentNode.insertBefore(t, s);
-    })(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js');
+  const pixelId = settings.metaPixelId || '3969663239835262';
 
-    window.fbq('init', settings.metaPixelId);
-    window.fbq('track', 'PageView');
+  // 1. Initialize Meta Pixel dynamically from Sanity
+  if (pixelId && pixelId !== activePixelId) {
+    activePixelId = pixelId;
+
+    if (!window.fbq) {
+      (function (f: any, b: any, e: any, v: any, n?: any, t?: any, s?: any) {
+        if (f.fbq) return;
+        n = f.fbq = function () {
+          n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments);
+        };
+        if (!f._fbq) f._fbq = n;
+        n.push = n;
+        n.loaded = !0;
+        n.version = '2.0';
+        n.queue = [];
+        t = b.createElement(e);
+        t.async = !0;
+        t.src = v;
+        s = b.getElementsByTagName(e)[0];
+        s.parentNode.insertBefore(t, s);
+      })(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js');
+    }
+
+    if (window.fbq) {
+      window.fbq('init', pixelId);
+      window.fbq('track', 'PageView');
+    }
   }
 
   // 2. Initialize GA4
