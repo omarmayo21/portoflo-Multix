@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { ArrowUpRight, Sparkles, ShieldCheck, Zap } from 'lucide-react';
+import { useLanguage } from '../i18n/context';
 import { useSanity } from '../context/SanityContext';
 import { HeroCanvas } from '../components/3d/HeroCanvas';
 import { MagneticButton } from '../components/ui/MagneticButton';

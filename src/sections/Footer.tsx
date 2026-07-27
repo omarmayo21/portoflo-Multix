@@ -1,14 +1,43 @@
 import React from 'react';
 import { Sparkles, Github, Linkedin, Twitter, Dribbble, Instagram, ArrowUp } from 'lucide-react';
 import { useLanguage } from '../i18n/context';
+import { useSanity } from '../context/SanityContext';
 import { LanguageSwitcher } from '../components/ui/LanguageSwitcher';
+
+const iconMap: Record<string, React.ReactNode> = {
+  Github: <Github className="w-4 h-4" />,
+  Linkedin: <Linkedin className="w-4 h-4" />,
+  Twitter: <Twitter className="w-4 h-4" />,
+  Dribbble: <Dribbble className="w-4 h-4" />,
+  Instagram: <Instagram className="w-4 h-4" />,
+};
+
+const defaultSocialLinks = [
+  { icon: <Github className="w-4 h-4" />, href: "https://github.com/multix-studio", label: "GitHub" },
+  { icon: <Linkedin className="w-4 h-4" />, href: "https://linkedin.com/company/multix-studio", label: "LinkedIn" },
+  { icon: <Twitter className="w-4 h-4" />, href: "https://twitter.com/multix_studio", label: "Twitter" },
+  { icon: <Dribbble className="w-4 h-4" />, href: "https://dribbble.com/multix-studio", label: "Dribbble" },
+  { icon: <Instagram className="w-4 h-4" />, href: "https://instagram.com/multix.studio", label: "Instagram" },
+];
 
 export const Footer: React.FC = () => {
   const { t } = useLanguage();
+  const { websiteContent } = useSanity();
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  // Dynamic content from Sanity or i18n fallback
+  const footerTagline = websiteContent?.footerTagline?.en || t('footer.tagline');
+  const footerCopyright = websiteContent?.footerCopyright || t('footer.copyright');
+  const socialLinks = websiteContent?.socialLinks?.length
+    ? websiteContent.socialLinks.map((link: any) => ({
+        icon: iconMap[link.icon] || <Github className="w-4 h-4" />,
+        href: link.url,
+        label: link.platform,
+      }))
+    : defaultSocialLinks;
 
   return (
     <footer className="py-16 relative bg-[#091224] text-slate-300 border-t border-white/10 overflow-hidden">
@@ -29,7 +58,7 @@ export const Footer: React.FC = () => {
             </a>
 
             <p className="text-sm text-slate-400 leading-relaxed max-w-sm">
-              {t('footer.tagline')}
+              {footerTagline}
             </p>
 
             <div className="pt-2">
@@ -57,13 +86,7 @@ export const Footer: React.FC = () => {
               {t('footer.socials')}
             </h4>
             <div className="flex flex-wrap gap-3">
-              {[
-                { icon: <Github className="w-4 h-4" />, href: "https://github.com/multix-studio", label: "GitHub" },
-                { icon: <Linkedin className="w-4 h-4" />, href: "https://linkedin.com/company/multix-studio", label: "LinkedIn" },
-                { icon: <Twitter className="w-4 h-4" />, href: "https://twitter.com/multix_studio", label: "Twitter" },
-                { icon: <Dribbble className="w-4 h-4" />, href: "https://dribbble.com/multix-studio", label: "Dribbble" },
-                { icon: <Instagram className="w-4 h-4" />, href: "https://instagram.com/multix.studio", label: "Instagram" },
-              ].map((item, idx) => (
+              {socialLinks.map((item: any, idx: number) => (
                 <a
                   key={idx}
                   href={item.href}
@@ -81,7 +104,7 @@ export const Footer: React.FC = () => {
 
         {/* Bottom copyright & scroll-to-top */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono text-slate-400">
-          <span>{t('footer.copyright')}</span>
+          <span>{footerCopyright}</span>
 
           <button
             onClick={scrollToTop}

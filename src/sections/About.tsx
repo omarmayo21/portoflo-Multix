@@ -2,11 +2,18 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { ShieldCheck, Award, Globe, Flame } from 'lucide-react';
 import { useLanguage } from '../i18n/context';
+import { useSanity } from '../context/SanityContext';
 import { SectionHeader } from '../components/ui/SectionHeader';
 
 export const About: React.FC = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const { websiteContent } = useSanity();
   const stats = t('about.stats') as any[];
+
+  // Dynamic Sanity content with i18n fallback
+  const aboutBadge = websiteContent?.aboutBadge?.[language] || websiteContent?.aboutBadge?.en || t('about.badge');
+  const aboutTitle = websiteContent?.aboutTitle?.[language] || websiteContent?.aboutTitle?.en || t('about.title');
+  const aboutDescription = websiteContent?.aboutDescription?.[language] || websiteContent?.aboutDescription?.en || t('about.subtitle');
 
   return (
     <section id="about" className="py-24 relative bg-[#091224] overflow-hidden border-t border-white/5">
@@ -15,9 +22,9 @@ export const About: React.FC = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <SectionHeader
-          badge={t('about.badge')}
-          title={t('about.title')}
-          subtitle={t('about.subtitle')}
+          badge={aboutBadge}
+          title={aboutTitle}
+          subtitle={aboutDescription}
         />
 
         {/* Studio Story Grid */}

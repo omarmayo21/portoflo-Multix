@@ -166,7 +166,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
                   onChange={(e) => setFormData({ ...formData, honeypot: e.target.value })}
                   style={{ display: 'none' }}
                   tabIndex={-1}
-                  autocomplete="off"
+                  autoComplete="off"
                 />
 
                 <div>

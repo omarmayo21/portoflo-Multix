@@ -9,7 +9,7 @@ export const sanityClient = createClient({
   projectId,
   dataset,
   apiVersion,
-  useCdn: true, // Use CDN for fast read performance
+  useCdn: false, // Disabled for real-time listener (.listen()) support
 });
 
 const builder = imageUrlBuilder(sanityClient);

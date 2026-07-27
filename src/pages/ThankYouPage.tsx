@@ -1,12 +1,17 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { CheckCircle2, ArrowRight, MessageSquare, Sparkles } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { useLanguage } from '../i18n/context';
+import { useSanity } from '../context/SanityContext';
+import { sanityClient } from '../lib/sanity/client';
+import { THANK_YOU_PAGE_QUERY } from '../lib/sanity/queries';
 import { trackLeadEvent } from '../utils/analytics';
 
 export const ThankYouPage: React.FC = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const { websiteContent } = useSanity();
+  const [pageData, setPageData] = useState<any>(null);
 
   useEffect(() => {
     // 1. Trigger confetti celebration
@@ -19,7 +24,26 @@ export const ThankYouPage: React.FC = () => {
 
     // 2. Fire fallback Meta Lead pixel event if user navigated directly
     trackLeadEvent({ service: 'Thank You Conversion Verification' });
+
+    // 3. Fetch dynamic thank you page content from Sanity
+    sanityClient
+      .fetch(THANK_YOU_PAGE_QUERY)
+      .then((res) => {
+        if (res) setPageData(res);
+      })
+      .catch(() => {});
   }, []);
+
+  const title = pageData?.title?.[language] || pageData?.title?.en || 'Thank You for Reaching Out!';
+  const subtitle =
+    pageData?.subtitle?.[language] ||
+    pageData?.subtitle?.en ||
+    'Your inquiry has been logged successfully. A Senior Creative Director will review your project details and respond within 12 hours.';
+  const ctaText = pageData?.ctaText?.[language] || pageData?.ctaText?.en || 'Return to Home';
+  const whatsappNumber =
+    pageData?.whatsappNumber ||
+    websiteContent?.contactPhone?.replace(/[^0-9]/g, '') ||
+    '971501234567';
 
   return (
     <div className="min-h-screen bg-[#0F1D38] text-white flex items-center justify-center px-4 py-20 relative overflow-hidden">
@@ -44,10 +68,10 @@ export const ThankYouPage: React.FC = () => {
             <Sparkles className="w-4 h-4" /> Submission Confirmed
           </span>
           <h1 className="text-3xl sm:text-4xl font-extrabold font-heading text-white">
-            Thank You for Reaching Out!
+            {title}
           </h1>
           <p className="text-slate-300 text-base max-w-lg mx-auto">
-            Your inquiry has been logged successfully. A Senior Creative Director will review your project details and respond within 12 hours.
+            {subtitle}
           </p>
         </div>
 
@@ -65,12 +89,12 @@ export const ThankYouPage: React.FC = () => {
             href="/"
             className="w-full sm:w-auto px-8 py-3.5 rounded-full bg-gradient-to-r from-[#2A4073] to-[#FF5E3A] text-white font-bold font-heading shadow-glow-accent hover:shadow-[0_0_30px_#FF5E3A] transition-all flex items-center justify-center gap-2"
           >
-            <span>Return to Home</span>
+            <span>{ctaText}</span>
             <ArrowRight className="w-5 h-5" />
           </a>
 
           <a
-            href="https://wa.me/971501234567"
+            href={`https://wa.me/${whatsappNumber}`}
             target="_blank"
             rel="noopener noreferrer"
             className="w-full sm:w-auto px-8 py-3.5 rounded-full bg-white/10 hover:bg-white/20 text-white font-bold font-heading border border-white/10 transition-all flex items-center justify-center gap-2"
