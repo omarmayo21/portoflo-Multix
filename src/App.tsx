@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { BrowserRouter, Routes, Route, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LanguageProvider, useLanguage } from './i18n/context';
 import { SanityProvider } from './context/SanityContext';
@@ -67,34 +68,30 @@ export const MainPortfolio: React.FC = () => {
   );
 };
 
+const LandingPageRouteWrapper: React.FC = () => {
+  const { slug } = useParams<{ slug: string }>();
+  return <LandingPage slug={slug || 'web-design'} />;
+};
+
 export const AppRoutes: React.FC = () => {
-  const path = window.location.pathname;
-
-  if (path.startsWith('/studio') || window.location.hash.startsWith('#studio')) {
-    return <StudioPage />;
-  }
-
-  if (path.startsWith('/thank-you')) {
-    return <ThankYouPage />;
-  }
-
-  if (path.startsWith('/preview')) {
-    return <PreviewPage />;
-  }
-
-  if (path.startsWith('/landing/')) {
-    const slug = path.replace('/landing/', '').replace(/\/$/, '');
-    return <LandingPage slug={slug || 'web-design'} />;
-  }
-
-  return <MainPortfolio />;
+  return (
+    <Routes>
+      <Route path="/studio/*" element={<StudioPage />} />
+      <Route path="/thank-you" element={<ThankYouPage />} />
+      <Route path="/preview" element={<PreviewPage />} />
+      <Route path="/landing/:slug" element={<LandingPageRouteWrapper />} />
+      <Route path="*" element={<MainPortfolio />} />
+    </Routes>
+  );
 };
 
 export default function App() {
   return (
     <LanguageProvider>
       <SanityProvider>
-        <AppRoutes />
+        <BrowserRouter>
+          <AppRoutes />
+        </BrowserRouter>
       </SanityProvider>
     </LanguageProvider>
   );

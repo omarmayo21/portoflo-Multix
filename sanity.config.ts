@@ -8,7 +8,7 @@ const projectId = import.meta.env.VITE_SANITY_PROJECT_ID || 'demo_project_id';
 const dataset = import.meta.env.VITE_SANITY_DATASET || 'production';
 
 export default defineConfig({
-  name: 'multix-studio-dashboard',
+  name: 'default',
   title: 'Multix Studio Dashboard',
   basePath: '/studio',
 
