@@ -8,7 +8,7 @@ import { MagneticButton } from '../components/ui/MagneticButton';
 import { HeroBrowserShowcase } from '../components/ui/HeroBrowserShowcase';
 
 export const Hero: React.FC = () => {
-  const { t, language } = useLanguage();
+  const { t, language, direction } = useLanguage();
   const { websiteContent } = useSanity();
 
   const heroBadge = websiteContent?.heroBadge?.[language] || websiteContent?.heroBadge?.en || t('hero.badge');
