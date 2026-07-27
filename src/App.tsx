@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LanguageProvider, useLanguage } from './i18n/context';
+import { SanityProvider } from './context/SanityContext';
 import { SmoothScrollProvider } from './components/ui/SmoothScrollProvider';
 import { IntroLoader } from './components/ui/IntroLoader';
 import { Navbar } from './components/navigation/Navbar';
@@ -16,7 +17,12 @@ import { FAQ } from './sections/FAQ';
 import { ContactCTA } from './sections/ContactCTA';
 import { Footer } from './sections/Footer';
 
-export const AppContent: React.FC = () => {
+import { StudioPage } from './pages/StudioPage';
+import { ThankYouPage } from './pages/ThankYouPage';
+import { PreviewPage } from './pages/PreviewPage';
+import { LandingPage } from './pages/LandingPage';
+
+export const MainPortfolio: React.FC = () => {
   const { language } = useLanguage();
   const [isLoading, setIsLoading] = useState(true);
 
@@ -61,10 +67,35 @@ export const AppContent: React.FC = () => {
   );
 };
 
+export const AppRoutes: React.FC = () => {
+  const path = window.location.pathname;
+
+  if (path.startsWith('/studio') || window.location.hash.startsWith('#studio')) {
+    return <StudioPage />;
+  }
+
+  if (path.startsWith('/thank-you')) {
+    return <ThankYouPage />;
+  }
+
+  if (path.startsWith('/preview')) {
+    return <PreviewPage />;
+  }
+
+  if (path.startsWith('/landing/')) {
+    const slug = path.replace('/landing/', '').replace(/\/$/, '');
+    return <LandingPage slug={slug || 'web-design'} />;
+  }
+
+  return <MainPortfolio />;
+};
+
 export default function App() {
   return (
     <LanguageProvider>
-      <AppContent />
+      <SanityProvider>
+        <AppRoutes />
+      </SanityProvider>
     </LanguageProvider>
   );
 }

@@ -8,6 +8,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      'react/compiler-runtime': path.resolve(__dirname, './src/utils/reactCompilerStub.js'),
     },
   },
   server: {
@@ -17,6 +18,6 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: false,
-    chunkSizeWarningLimit: 1600,
+    chunkSizeWarningLimit: 3000,
   },
 });

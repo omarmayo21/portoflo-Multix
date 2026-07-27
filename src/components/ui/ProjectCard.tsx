@@ -1,16 +1,17 @@
 import React, { useRef, useState, MouseEvent } from 'react';
 import { motion } from 'framer-motion';
 import { ExternalLink } from 'lucide-react';
-import { Project } from '../../types';
 import { useLanguage } from '../../i18n/context';
+import { urlFor } from '../../lib/sanity/client';
+import { trackCtaClick } from '../../utils/analytics';
 
 interface ProjectCardProps {
-  project: Project;
+  project: any;
   index: number;
 }
 
 export const ProjectCard: React.FC<ProjectCardProps> = ({ project, index }) => {
-  const { language, direction } = useLanguage();
+  const { language } = useLanguage();
   const cardRef = useRef<HTMLDivElement>(null);
   const [rotateX, setRotateX] = useState(0);
   const [rotateY, setRotateY] = useState(0);
@@ -35,11 +36,40 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, index }) => {
     setRotateY(0);
   };
 
+  // Safe field resolvers for Sanity or fallback structure
+  const title =
+    typeof project.title === 'string'
+      ? project.title
+      : project.title?.[language] || project.title?.en || 'Project';
+
+  const description =
+    typeof project.shortDescription === 'string'
+      ? project.shortDescription
+      : project.shortDescription?.[language] ||
+        project.shortDescription?.en ||
+        project.description?.[language] ||
+        project.description?.en ||
+        '';
+
+  const category =
+    project.categoryRef?.title?.[language] ||
+    project.categoryRef?.title?.en ||
+    (typeof project.category === 'string' ? project.category : project.category?.[language] || project.category?.en || 'Web App');
+
+  const liveUrl = project.liveDemoUrl || project.liveDemo || '#';
+
+  const coverImage = project.mainImage
+    ? urlFor(project.mainImage).width(800).height(500).url()
+    : project.coverImage || 'https://images.unsplash.com/photo-1507238691740-187a5b1d37b8';
+
+  const techList = project.technologies || [];
+
   return (
     <motion.a
-      href={project.liveDemo}
+      href={liveUrl}
       target="_blank"
       rel="noopener noreferrer"
+      onClick={() => trackCtaClick(`Project Demo Click - ${title}`)}
       initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
@@ -58,8 +88,8 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, index }) => {
         {/* Cover Image Container */}
         <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-900">
           <img
-            src={project.coverImage}
-            alt={project.title[language]}
+            src={coverImage}
+            alt={title}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
             loading="lazy"
           />
@@ -69,7 +99,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, index }) => {
 
           {/* Category Badge */}
           <div className="absolute top-4 right-4 z-10 px-3 py-1 rounded-full bg-[#0F1D38]/80 backdrop-blur-md border border-white/10 text-xs font-semibold text-slate-300">
-            {project.category[language]}
+            {category}
           </div>
         </div>
 
@@ -77,17 +107,17 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, index }) => {
         <div className="p-6 sm:p-8 flex flex-col justify-between flex-grow bg-[#0F1D38]/95">
           <div>
             <h3 className="text-xl sm:text-2xl font-bold font-heading text-white group-hover:text-[#FF5E3A] transition-colors duration-300 mb-2.5">
-              {project.title[language]}
+              {title}
             </h3>
             <p className="text-sm text-slate-300 line-clamp-2 leading-relaxed mb-6">
-              {project.description[language]}
+              {description}
             </p>
           </div>
 
           {/* Tech Stack & Action Button */}
           <div className="space-y-4 pt-4 border-t border-white/10">
             <div className="flex flex-wrap gap-2">
-              {project.technologies.map((tech, idx) => (
+              {techList.map((tech: string, idx: number) => (
                 <span
                   key={idx}
                   className="px-2.5 py-1 rounded-md bg-[#2A4073]/30 border border-white/5 text-[11px] font-mono text-slate-300"

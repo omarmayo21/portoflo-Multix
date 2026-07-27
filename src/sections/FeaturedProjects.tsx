@@ -1,11 +1,12 @@
 import React from 'react';
-import { projectsData } from '../data/projects';
 import { useLanguage } from '../i18n/context';
+import { useSanity } from '../context/SanityContext';
 import { SectionHeader } from '../components/ui/SectionHeader';
 import { ProjectCard } from '../components/ui/ProjectCard';
 
 export const FeaturedProjects: React.FC = () => {
   const { t } = useLanguage();
+  const { projects } = useSanity();
 
   return (
     <section id="projects" className="py-24 relative bg-[#0F1D38] overflow-hidden">
@@ -21,9 +22,9 @@ export const FeaturedProjects: React.FC = () => {
 
         {/* Projects Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {projectsData.map((project, index) => (
+          {projects.map((project, index) => (
             <ProjectCard
-              key={project.id}
+              key={project._id || project.id || index}
               project={project}
               index={index}
             />

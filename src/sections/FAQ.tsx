@@ -2,13 +2,24 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Minus } from 'lucide-react';
 import { useLanguage } from '../i18n/context';
+import { useSanity } from '../context/SanityContext';
 import { SectionHeader } from '../components/ui/SectionHeader';
 
 export const FAQ: React.FC = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const { faqs: sanityFaqs } = useSanity();
   const [openId, setOpenId] = useState<string | null>('faq-1');
 
-  const faqItems = t('faq.items') as any[];
+  const defaultFaqs = t('faq.items') as any[];
+
+  const faqItems =
+    sanityFaqs && sanityFaqs.length > 0
+      ? sanityFaqs.map((item, idx) => ({
+          id: item._id || `faq-${idx}`,
+          question: item.question?.[language] || item.question?.en || '',
+          answer: item.answer?.[language] || item.answer?.en || '',
+        }))
+      : defaultFaqs;
 
   const toggleAccordion = (id: string) => {
     setOpenId(openId === id ? null : id);
@@ -24,15 +35,16 @@ export const FAQ: React.FC = () => {
         />
 
         <div className="space-y-4">
-          {faqItems.map((item) => {
-            const isOpen = openId === item.id;
+          {faqItems.map((item, idx) => {
+            const itemId = item.id || `faq-${idx}`;
+            const isOpen = openId === itemId;
             return (
               <div
-                key={item.id}
+                key={itemId}
                 className="rounded-2xl bg-[#0F1D38]/80 border border-white/10 overflow-hidden transition-colors"
               >
                 <button
-                  onClick={() => toggleAccordion(item.id)}
+                  onClick={() => toggleAccordion(itemId)}
                   className="w-full p-6 text-start flex items-center justify-between gap-4 font-bold font-heading text-lg text-white hover:text-[#FF5E3A] transition-colors"
                 >
                   <span>{item.question}</span>

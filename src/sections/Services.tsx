@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Palette, Code2, Sparkles, LayoutDashboard, ShoppingCart, Wrench, Check } from 'lucide-react';
 import { useLanguage } from '../i18n/context';
+import { useSanity } from '../context/SanityContext';
 import { SectionHeader } from '../components/ui/SectionHeader';
 
 export const Services: React.FC = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const { services: sanityServices } = useSanity();
   const [activeCard, setActiveCard] = useState<string | null>(null);
 
   const iconMap: Record<string, React.ReactNode> = {
@@ -17,7 +19,19 @@ export const Services: React.FC = () => {
     Wrench: <Wrench className="w-7 h-7 text-[#A5C0EE]" />,
   };
 
-  const services = t('services.items') as any[];
+  const defaultServices = t('services.items') as any[];
+
+  // Render Sanity services if available, otherwise default i18n
+  const displayServices =
+    sanityServices && sanityServices.length > 0
+      ? sanityServices.map((s) => ({
+          id: s._id,
+          title: s.title?.[language] || s.title?.en || '',
+          description: s.description?.[language] || s.description?.en || '',
+          icon: s.iconName || 'Code2',
+          features: (s.features || []).map((f: any) => (typeof f === 'string' ? f : f?.[language] || f?.en || '')),
+        }))
+      : defaultServices;
 
   return (
     <section id="services" className="py-24 relative bg-[#091224] border-t border-white/5 overflow-hidden">
@@ -32,9 +46,9 @@ export const Services: React.FC = () => {
         />
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {services.map((item, idx) => (
+          {displayServices.map((item, idx) => (
             <motion.div
-              key={item.id}
+              key={item.id || idx}
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -63,14 +77,16 @@ export const Services: React.FC = () => {
               </div>
 
               {/* Features Checklist */}
-              <div className="pt-6 border-t border-white/10 space-y-2.5">
-                {item.features.map((feat: string, fIdx: number) => (
-                  <div key={fIdx} className="flex items-center gap-2 text-xs font-medium text-slate-300">
-                    <Check className="w-3.5 h-3.5 text-[#FF5E3A] shrink-0" />
-                    <span>{feat}</span>
-                  </div>
-                ))}
-              </div>
+              {item.features && item.features.length > 0 && (
+                <div className="pt-6 border-t border-white/10 space-y-2.5">
+                  {item.features.map((feat: string, fIdx: number) => (
+                    <div key={fIdx} className="flex items-center gap-2 text-xs font-medium text-slate-300">
+                      <Check className="w-3.5 h-3.5 text-[#FF5E3A] shrink-0" />
+                      <span>{feat}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </motion.div>
           ))}
         </div>
