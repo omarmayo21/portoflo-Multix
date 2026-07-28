@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, CheckCircle2, Send, ShieldCheck, Zap, Star, MessageSquare, ArrowLeft, Plus, Minus, Lock } from 'lucide-react';
+import { Sparkles, CheckCircle2, Send, ShieldCheck, Zap, Star, MessageSquare, ArrowLeft, Plus, Minus, Lock, AlertCircle } from 'lucide-react';
 import { sanityClient, urlFor } from '../lib/sanity/client';
 import { LANDING_PAGE_BY_SLUG_QUERY, TESTIMONIALS_QUERY, FAQS_QUERY } from '../lib/sanity/queries';
 import { submitLeadForm } from '../lib/sanity/submitLead';
@@ -17,6 +17,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
   const [faqs, setFaqs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
   const [openFaqId, setOpenFaqId] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
@@ -40,7 +41,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
           setData(pageRes);
           updateSeoMeta({
             title: pageRes.seoTitle || `احصل على موقع إلكتروني احترافي | MULTIX Studio`,
-            description: pageRes.seoDescription || `نصمم ونطور مواقع إلكترونية سريعة واحترافية متوافقة مع حملات Meta Ads.`,
+            description: pageRes.seoDescription || `نصمم ونطور مواقع إلكترونية سريعة واحترافية مخصصة لحملات Meta Ads.`,
             canonicalUrl: pageRes.canonicalUrl,
           });
         } else {
@@ -53,7 +54,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
         if (testRes && testRes.length > 0) setTestimonials(testRes.slice(0, 3));
         if (faqRes && faqRes.length > 0) setFaqs(faqRes.slice(0, 4));
 
-        // Fire PageView & ViewContent analytics event for Meta Ads tracking
+        // Fire PageView & ViewContent analytics event on load
         trackViewContent(pageRes?.pageName || `حملة إعلانات: ${slug}`, 'Meta Ads Campaign Landing Page');
       } catch (err) {
         console.warn('Error fetching landing page data:', err);
@@ -67,7 +68,21 @@ export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.phone || !formData.message) return;
+    setValidationError(null);
+
+    // Validation Check in Arabic
+    if (!formData.name.trim()) {
+      setValidationError('يرجى إدخال الاسم الكامل.');
+      return;
+    }
+    if (!formData.phone.trim()) {
+      setValidationError('يرجى إدخال رقم الهاتف / الواتساب للتواصل.');
+      return;
+    }
+    if (!formData.message.trim()) {
+      setValidationError('يرجى كتابة تفاصيل مشروعك واحتياجاتك.');
+      return;
+    }
 
     setIsSubmitting(true);
     trackCtaClick('Meta Ads Campaign Form Submit', data?.pageName || slug);
@@ -80,7 +95,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
       budget: formData.budget || 'غير محدد',
       message: formData.message,
       honeypot: formData.honeypot,
-      ctaClicked: 'نموذج طلب عرض سعر Meta Ads',
+      ctaClicked: 'نموذج طلب عرض سعر Meta Ads (Mobile First)',
     });
 
     setIsSubmitting(false);
@@ -88,6 +103,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
     if (result.success) {
       // Redirect immediately to Thank You page
       window.location.href = '/thank-you';
+    } else {
+      setValidationError('حدث خطأ أثناء إرسال البيانات. يرجى المحاولة مرة أخرى.');
     }
   };
 
@@ -102,7 +119,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
     );
   }
 
-  // Arabic Hero Content (Custom or Sanity fallback)
+  // Arabic Hero Copy
   const heroTitle =
     data?.heroTitle?.ar ||
     data?.heroTitle?.en ||
@@ -127,8 +144,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
   return (
     <div dir="rtl" className="min-h-screen bg-[#0F1D38] text-slate-100 selection:bg-[#FF5E3A] selection:text-white font-sans antialiased overflow-x-hidden relative">
       
-      {/* Top Navigation Bar */}
-      <header className="py-5 px-4 sm:px-8 border-b border-white/10 bg-[#0F1D38]/90 backdrop-blur-xl sticky top-0 z-50 shadow-lg">
+      {/* Top Header Navigation Bar */}
+      <header className="py-4 px-4 sm:px-8 border-b border-white/10 bg-[#0F1D38]/90 backdrop-blur-xl sticky top-0 z-50 shadow-lg">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <a href="/" className="text-xl font-black tracking-wider text-white flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#2A4073] to-[#FF5E3A] p-[1px] shadow-glow-accent">
@@ -144,23 +161,161 @@ export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
           <a
             href="#lead-form-hero"
             onClick={() => trackCtaClick('Top Header CTA', data?.pageName)}
-            className="px-5 py-2.5 rounded-full bg-gradient-to-r from-[#2A4073] to-[#FF5E3A] text-white text-xs font-bold shadow-glow-accent hover:shadow-[0_0_25px_#FF5E3A] transition-all"
+            className="px-4 py-2 sm:px-5 sm:py-2.5 rounded-full bg-gradient-to-r from-[#2A4073] to-[#FF5E3A] text-white text-xs font-bold shadow-glow-accent hover:shadow-[0_0_25px_#FF5E3A] transition-all"
           >
             {primaryCta}
           </a>
         </div>
       </header>
 
-      {/* Main Hero & Above-The-Fold Lead Form Section */}
-      <section className="py-10 sm:py-16 relative overflow-hidden">
-        {/* Radial Ambient Orbs */}
+      {/* Main Hero & Lead Form Section */}
+      <section className="py-6 sm:py-16 relative overflow-hidden">
+        {/* Ambient Radial Lights */}
         <div className="absolute top-1/4 right-10 w-[500px] h-[500px] bg-[#2A4073]/25 rounded-full blur-[160px] pointer-events-none" />
         <div className="absolute top-1/3 left-10 w-[500px] h-[500px] bg-[#FF5E3A]/15 rounded-full blur-[150px] pointer-events-none" />
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 items-center">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-8 items-center">
           
-          {/* Right Column: High-Persuasion Arabic Copy & Highlights */}
-          <div className="lg:col-span-7 space-y-6 text-center lg:text-start">
+          {/* MOBILE FIRST: Form is FIRST on mobile (order-1), copy is SECOND (order-2). Desktop maintains natural RTL layout */}
+          
+          {/* 1. Lead Capture Form Box (First thing on Mobile above the fold) */}
+          <div id="lead-form-hero" className="order-1 lg:order-2 lg:col-span-5 w-full">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+              className="p-6 sm:p-9 rounded-3xl bg-[#0F1D38]/95 border border-white/15 backdrop-blur-2xl shadow-2xl space-y-5 relative border-t-4 border-t-[#FF5E3A]"
+            >
+              <div className="space-y-1 text-start">
+                <span className="text-[11px] sm:text-xs font-bold uppercase tracking-widest text-[#FF5E3A]">
+                  احصل على استشارة مجانية وعرض سعر
+                </span>
+                <h3 className="text-xl sm:text-2xl font-bold text-white leading-snug">
+                  طلب عرض سعر وخطة عمل لمشروعك
+                </h3>
+                <p className="text-xs text-slate-400">
+                  أدخل بياناتك وسيقوم أحد خبراء التطوير بالتواصل معك خلال أقل من 12 ساعة.
+                </p>
+              </div>
+
+              {/* Validation Warning Alert */}
+              {validationError && (
+                <div className="p-3 rounded-xl bg-[#FF5E3A]/20 border border-[#FF5E3A]/40 text-[#FF5E3A] text-xs font-semibold flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>{validationError}</span>
+                </div>
+              )}
+
+              <form onSubmit={handleSubmit} className="space-y-4 text-start">
+                {/* Honeypot Spam Protection */}
+                <input
+                  type="text"
+                  name="honeypot"
+                  value={formData.honeypot}
+                  onChange={(e) => setFormData({ ...formData, honeypot: e.target.value })}
+                  style={{ display: 'none' }}
+                  tabIndex={-1}
+                  autoComplete="off"
+                />
+
+                {/* 1. Full Name (Required) */}
+                <div>
+                  <label className="block text-xs font-bold tracking-wider text-slate-300 mb-1.5">
+                    الاسم الكامل *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    onFocus={trackFormStart}
+                    value={formData.name}
+                    onChange={(e) => {
+                      setFormData({ ...formData, name: e.target.value });
+                      if (validationError) setValidationError(null);
+                    }}
+                    placeholder="أدخل اسمك الكامل"
+                    className="w-full px-4 py-3.5 rounded-2xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-[#FF5E3A] transition-colors text-sm"
+                  />
+                </div>
+
+                {/* 2. Phone Number (Required) */}
+                <div>
+                  <label className="block text-xs font-bold tracking-wider text-slate-300 mb-1.5">
+                    رقم الهاتف / الواتساب *
+                  </label>
+                  <input
+                    type="tel"
+                    required
+                    value={formData.phone}
+                    onChange={(e) => {
+                      setFormData({ ...formData, phone: e.target.value });
+                      if (validationError) setValidationError(null);
+                    }}
+                    placeholder="+966 50 000 0000"
+                    dir="ltr"
+                    className="w-full px-4 py-3.5 rounded-2xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-[#FF5E3A] transition-colors text-sm text-right"
+                  />
+                </div>
+
+                {/* 3. Project Details (Required) */}
+                <div>
+                  <label className="block text-xs font-bold tracking-wider text-slate-300 mb-1.5">
+                    تفاصيل مشروعك واحتياجاتك *
+                  </label>
+                  <textarea
+                    rows={3}
+                    required
+                    value={formData.message}
+                    onChange={(e) => {
+                      setFormData({ ...formData, message: e.target.value });
+                      if (validationError) setValidationError(null);
+                    }}
+                    placeholder="اكتب نبذة مختصرة عن نوع الموقع والأهداف المطلوب تحقيقها..."
+                    className="w-full px-4 py-3.5 rounded-2xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-[#FF5E3A] transition-colors resize-none text-sm"
+                  />
+                </div>
+
+                {/* 4. Budget (Optional) */}
+                <div>
+                  <label className="block text-xs font-bold tracking-wider text-slate-400 mb-1.5">
+                    الميزانية التقديرية (اختياري)
+                  </label>
+                  <select
+                    value={formData.budget}
+                    onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
+                    className="w-full px-4 py-3.5 rounded-2xl bg-[#0F1D38] border border-white/10 text-slate-200 focus:outline-none focus:border-[#FF5E3A] transition-colors text-sm"
+                  >
+                    <option value="">حدد الميزانية المناسبة لمشروعك</option>
+                    <option value="10k-20k">10,000 $ – 20,000 $</option>
+                    <option value="20k-50k">20,000 $ – 50,000 $</option>
+                    <option value="50k+">أكثر من 50,000 $</option>
+                  </select>
+                </div>
+
+                {/* Submit Button */}
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full py-4 rounded-2xl bg-gradient-to-r from-[#2A4073] to-[#FF5E3A] text-white font-bold text-center shadow-glow-accent hover:shadow-[0_0_35px_#FF5E3A] transition-all flex items-center justify-center gap-2 text-base mt-2"
+                >
+                  {isSubmitting ? (
+                    <span>جاري إرسال الطلب...</span>
+                  ) : (
+                    <>
+                      <span>{primaryCta}</span>
+                      <ArrowLeft className="w-5 h-5" />
+                    </>
+                  )}
+                </button>
+
+                <p className="text-[11px] text-slate-400 text-center pt-1 flex items-center justify-center gap-1.5">
+                  <Lock className="w-3.5 h-3.5 text-[#FF5E3A]" /> بياناتك آمنة ومحمية 100%. لا نرسل رسائل مزعجة.
+                </p>
+              </form>
+            </motion.div>
+          </div>
+
+          {/* 2. Persuasive Arabic Copy & Highlights (Order 2 on mobile, order 1 on desktop) */}
+          <div className="order-2 lg:order-1 lg:col-span-7 space-y-6 text-center lg:text-start">
             
             {/* Offer Pill */}
             <motion.div
@@ -208,124 +363,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
             </motion.div>
           </div>
 
-          {/* Left Column: Above-The-Fold Lead Capture Form */}
-          <div id="lead-form-hero" className="lg:col-span-5">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.96, y: 25 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-              className="p-7 sm:p-9 rounded-3xl bg-[#0F1D38]/95 border border-white/15 backdrop-blur-2xl shadow-2xl space-y-5 relative border-t-2 border-t-[#FF5E3A]"
-            >
-              <div className="space-y-1 text-start">
-                <span className="text-xs font-bold uppercase tracking-widest text-[#FF5E3A]">
-                  احصل على استشارة مجانية
-                </span>
-                <h3 className="text-2xl font-bold text-white">
-                  طلب عرض سعر وخطة عمل
-                </h3>
-                <p className="text-xs text-slate-400">
-                  أدخل بياناتك وسيقوم أحد خبراء التطوير بالتواصل معك خلال أقل من 12 ساعة.
-                </p>
-              </div>
-
-              <form onSubmit={handleSubmit} className="space-y-4 text-start">
-                {/* Honeypot Spam Protection */}
-                <input
-                  type="text"
-                  name="honeypot"
-                  value={formData.honeypot}
-                  onChange={(e) => setFormData({ ...formData, honeypot: e.target.value })}
-                  style={{ display: 'none' }}
-                  tabIndex={-1}
-                  autoComplete="off"
-                />
-
-                {/* 1. Full Name (Required) */}
-                <div>
-                  <label className="block text-xs font-bold tracking-wider text-slate-300 mb-1.5">
-                    الاسم الكامل *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    onFocus={trackFormStart}
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="أدخل اسمك الكامل"
-                    className="w-full px-4 py-3.5 rounded-2xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-[#FF5E3A] transition-colors text-sm"
-                  />
-                </div>
-
-                {/* 2. Phone Number (Required) */}
-                <div>
-                  <label className="block text-xs font-bold tracking-wider text-slate-300 mb-1.5">
-                    رقم الهاتف / الواتساب *
-                  </label>
-                  <input
-                    type="tel"
-                    required
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    placeholder="+966 50 000 0000"
-                    dir="ltr"
-                    className="w-full px-4 py-3.5 rounded-2xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-[#FF5E3A] transition-colors text-sm text-right"
-                  />
-                </div>
-
-                {/* 3. Project Details (Required) */}
-                <div>
-                  <label className="block text-xs font-bold tracking-wider text-slate-300 mb-1.5">
-                    تفاصيل مشروعك واحتياجاتك *
-                  </label>
-                  <textarea
-                    rows={3}
-                    required
-                    value={formData.message}
-                    onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                    placeholder="اكتب نبذة مختصرة عن نوع الموقع والأهداف المطلوب تحقيقها..."
-                    className="w-full px-4 py-3.5 rounded-2xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-[#FF5E3A] transition-colors resize-none text-sm"
-                  />
-                </div>
-
-                {/* 4. Budget (Optional) */}
-                <div>
-                  <label className="block text-xs font-bold tracking-wider text-slate-400 mb-1.5">
-                    الميزانية التقديرية (اختياري)
-                  </label>
-                  <select
-                    value={formData.budget}
-                    onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
-                    className="w-full px-4 py-3.5 rounded-2xl bg-[#0F1D38] border border-white/10 text-slate-200 focus:outline-none focus:border-[#FF5E3A] transition-colors text-sm"
-                  >
-                    <option value="">حدد الميزانية المناسبة لمشروعك</option>
-                    <option value="10k-20k">10,000 $ – 20,000 $</option>
-                    <option value="20k-50k">20,000 $ – 50,000 $</option>
-                    <option value="50k+">أكثر من 50,000 $</option>
-                  </select>
-                </div>
-
-                {/* Submit Button */}
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full py-4 rounded-2xl bg-gradient-to-r from-[#2A4073] to-[#FF5E3A] text-white font-bold text-center shadow-glow-accent hover:shadow-[0_0_35px_#FF5E3A] transition-all flex items-center justify-center gap-2 text-base mt-2"
-                >
-                  {isSubmitting ? (
-                    <span>جاري إرسال الطلب...</span>
-                  ) : (
-                    <>
-                      <span>{primaryCta}</span>
-                      <ArrowLeft className="w-5 h-5" />
-                    </>
-                  )}
-                </button>
-
-                <p className="text-[11px] text-slate-400 text-center pt-1 flex items-center justify-center gap-1.5">
-                  <Lock className="w-3.5 h-3.5 text-[#FF5E3A]" /> بياناتك آمنة ومحمية 100%. لا نرسل رسائل مزعجة.
-                </p>
-              </form>
-            </motion.div>
-          </div>
         </div>
       </section>
 
@@ -395,7 +432,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
                       className="w-full p-5 text-start flex items-center justify-between gap-4 font-bold text-base text-white hover:text-[#FF5E3A] transition-colors"
                     >
                       <span>{faq.question?.ar || faq.question?.en || faq.question}</span>
-                      <div className={`p-1.5 rounded-full ${isOpen ? 'bg-[#FF5E3A] text-white' : 'bg-[#2A4073]/40 text-slate-300'}`}>
+                      <div className={`p-1.5 rounded-full ${isOpen ? 'bg-[#FF5E3A] text-[#FFF]' : 'bg-[#2A4073]/40 text-slate-300'}`}>
                         {isOpen ? <Minus className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
                       </div>
                     </button>
