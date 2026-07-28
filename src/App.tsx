@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { BrowserRouter, Routes, Route, useParams } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { BrowserRouter, Routes, Route, useParams, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LanguageProvider, useLanguage } from './i18n/context';
 import { SanityProvider } from './context/SanityContext';
@@ -22,6 +22,17 @@ import { StudioPage } from './pages/StudioPage';
 import { ThankYouPage } from './pages/ThankYouPage';
 import { PreviewPage } from './pages/PreviewPage';
 import { LandingPage } from './pages/LandingPage';
+import { trackPageView } from './utils/analytics';
+
+const PageViewTracker: React.FC = () => {
+  const location = useLocation();
+
+  useEffect(() => {
+    trackPageView(location.pathname + location.search);
+  }, [location]);
+
+  return null;
+};
 
 export const MainPortfolio: React.FC = () => {
   const { language } = useLanguage();
@@ -91,6 +102,7 @@ export default function App() {
     <LanguageProvider>
       <SanityProvider>
         <BrowserRouter>
+          <PageViewTracker />
           <AppRoutes />
         </BrowserRouter>
       </SanityProvider>

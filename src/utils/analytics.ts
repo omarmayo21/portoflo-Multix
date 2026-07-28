@@ -116,13 +116,13 @@ export function trackLeadEvent(leadData?: { name?: string; service?: string; bud
 export function trackCtaClick(ctaName: string, campaign?: string) {
   if (typeof window === 'undefined') return;
   if (window.fbq) {
-    window.fbq('trackCustom', 'CtaClick', {
-      cta_name: ctaName,
+    window.fbq('track', 'Contact', {
+      content_name: ctaName,
       campaign: campaign || 'Default',
     });
   }
   if (window.gtag) {
-    window.gtag('event', 'cta_click', {
+    window.gtag('event', 'contact', {
       cta_name: ctaName,
       campaign_name: campaign,
     });
@@ -131,18 +131,38 @@ export function trackCtaClick(ctaName: string, campaign?: string) {
 
 export function trackWhatsAppClick() {
   if (typeof window === 'undefined') return;
-  if (window.fbq) window.fbq('trackCustom', 'WhatsAppContact');
-  if (window.gtag) window.gtag('event', 'whatsapp_click');
+  if (window.fbq) {
+    window.fbq('track', 'Contact', {
+      content_name: 'WhatsApp Contact',
+    });
+  }
+  if (window.gtag) {
+    window.gtag('event', 'contact', {
+      method: 'WhatsApp',
+    });
+  }
 }
 
 export function trackPhoneClick() {
   if (typeof window === 'undefined') return;
-  if (window.fbq) window.fbq('trackCustom', 'PhoneCallContact');
-  if (window.gtag) window.gtag('event', 'phone_click');
+  if (window.fbq) {
+    window.fbq('track', 'Contact', {
+      content_name: 'Phone Call Contact',
+    });
+  }
+  if (window.gtag) {
+    window.gtag('event', 'contact', {
+      method: 'Phone',
+    });
+  }
 }
 
 export function trackFormStart() {
   if (typeof window === 'undefined') return;
-  if (window.fbq) window.fbq('trackCustom', 'FormStarted');
-  if (window.gtag) window.gtag('event', 'form_start');
+  if (window.fbq) {
+    window.fbq('trackCustom', 'FormStarted');
+  }
+  if (window.gtag) {
+    window.gtag('event', 'form_start');
+  }
 }
