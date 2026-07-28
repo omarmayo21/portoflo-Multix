@@ -195,18 +195,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
                       <textarea rows={3} required value={formData.message} onChange={(e) => { setFormData({ ...formData, message: e.target.value }); clearError(); }} placeholder="اكتب نبذة عن مشروعك واحتياجاتك..." className="w-full px-4 py-3 rounded-xl bg-white/[0.04] border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-[#FF5E3A]/60 focus:bg-white/[0.06] transition-all resize-none text-sm" />
                     </div>
 
-                    <div>
-                      <label className="block text-[11px] font-semibold text-slate-500 mb-1">الميزانية التقريبية (اختياري)</label>
-                      <select value={formData.budget} onChange={(e) => setFormData({ ...formData, budget: e.target.value })} className="w-full px-4 py-3 rounded-xl bg-[#0F1D38] border border-white/10 text-slate-300 focus:outline-none focus:border-[#FF5E3A]/60 transition-all text-sm appearance-none">
-                        <option value="">اختر الميزانية المناسبة</option>
-                        <option value="5k-10k">5,000 $ – 10,000 $</option>
-                        <option value="10k-20k">10,000 $ – 20,000 $</option>
-                        <option value="20k-50k">20,000 $ – 50,000 $</option>
-                        <option value="50k+">أكثر من 50,000 $</option>
-                      </select>
-                    </div>
-
-                    <button type="submit" disabled={isSubmitting} className="w-full py-3.5 rounded-xl bg-gradient-to-r from-[#2A4073] to-[#FF5E3A] text-white font-bold text-center hover:shadow-[0_0_30px_#FF5E3A] transition-all flex items-center justify-center gap-2 text-sm mt-1">
+                    <button type="submit" disabled={isSubmitting} className="w-full py-3.5 rounded-xl bg-gradient-to-r from-[#2A4073] to-[#FF5E3A] text-white font-bold text-center hover:shadow-[0_0_30px_#FF5E3A] transition-all flex items-center justify-center gap-2 text-sm mt-2">
                       {isSubmitting ? 'جاري الإرسال...' : (
                         <>
                           <span>{ctaText}</span>
@@ -324,13 +313,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
           </div>
         </section>
       )}
-
-      {/* ── Sticky Mobile CTA ── */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 p-3 bg-[#0F1D38]/95 backdrop-blur-xl border-t border-white/10 z-50">
-        <a href="#lead-form" onClick={() => trackCtaClick('Sticky Mobile CTA', data?.pageName)} className="w-full py-3 rounded-full bg-gradient-to-r from-[#2A4073] to-[#FF5E3A] text-white font-bold text-center block text-sm">
-          {ctaText}
-        </a>
-      </div>
 
     </div>
   );
