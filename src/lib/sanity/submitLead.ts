@@ -52,13 +52,6 @@ export async function submitLeadForm(input: FormSubmissionInput): Promise<{ succ
     browser: utms.browser,
   };
 
-  // 3. Fire Meta Pixel & GA4 browser lead events
-  trackLeadEvent({
-    name: input.name,
-    service: input.service,
-    budget: input.budget,
-  });
-
   // 4. Generate CAPI payload ready for server logs / webhooks
   const _capiPayload = formatMetaCapiPayload(leadData);
 

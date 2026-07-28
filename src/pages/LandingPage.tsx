@@ -7,6 +7,8 @@ import { submitLeadForm } from '../lib/sanity/submitLead';
 import { trackViewContent, trackCtaClick, trackFormStart } from '../utils/analytics';
 import { updateSeoMeta } from '../utils/seo';
 
+declare let fbq: any;
+
 interface LandingPageProps {
   slug: string;
 }
@@ -84,6 +86,18 @@ export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
     setIsSubmitting(false);
 
     if (result.success) {
+      // Fire standard Meta Pixel Lead event on successful submission
+      if (typeof fbq !== 'undefined') {
+        fbq('track', 'Lead');
+      }
+
+      // Also fire GA4 generate_lead event if Google Analytics is configured
+      if (typeof window !== 'undefined' && (window as any).gtag) {
+        (window as any).gtag('event', 'generate_lead', {
+          service_name: data?.pageName || `Campaign: ${slug}`,
+        });
+      }
+
       window.location.href = '/thank-you';
     } else {
       setValidationError('حدث خطأ أثناء الإرسال. يرجى المحاولة مرة أخرى.');
