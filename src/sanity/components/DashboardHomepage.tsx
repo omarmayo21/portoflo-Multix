@@ -63,7 +63,7 @@ export function DashboardHomepage() {
   };
 
   return (
-    <Card padding={5} space={5}>
+    <Card padding={5}>
       <Stack space={5}>
         <Flex justify="space-between" align="center">
           <Heading size={3}>🚀 Multix Executive Dashboard</Heading>
