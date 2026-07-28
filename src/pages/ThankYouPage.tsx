@@ -5,7 +5,6 @@ import confetti from 'canvas-confetti';
 import { useSanity } from '../context/SanityContext';
 import { sanityClient } from '../lib/sanity/client';
 import { THANK_YOU_PAGE_QUERY } from '../lib/sanity/queries';
-import { trackLeadEvent } from '../utils/analytics';
 
 export const ThankYouPage: React.FC = () => {
   const { websiteContent } = useSanity();
@@ -18,8 +17,6 @@ export const ThankYouPage: React.FC = () => {
       origin: { y: 0.5 },
       colors: ['#2A4073', '#FF5E3A', '#FFFFFF'],
     });
-
-    trackLeadEvent({ service: 'Thank You Conversion Verification' });
 
     sanityClient
       .fetch(THANK_YOU_PAGE_QUERY)
@@ -34,7 +31,7 @@ export const ThankYouPage: React.FC = () => {
   const whatsappNumber =
     pageData?.whatsappNumber ||
     websiteContent?.contactPhone?.replace(/[^0-9]/g, '') ||
-    '966500000000';
+    '201020047243';
 
   return (
     <div

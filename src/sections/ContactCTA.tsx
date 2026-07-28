@@ -6,7 +6,7 @@ import { useLanguage } from '../i18n/context';
 import { useSanity } from '../context/SanityContext';
 import { SectionHeader } from '../components/ui/SectionHeader';
 import { submitLeadForm } from '../lib/sanity/submitLead';
-import { trackFormStart, trackCtaClick } from '../utils/analytics';
+import { trackFormStart, trackCtaClick, trackLeadEvent } from '../utils/analytics';
 
 export const ContactCTA: React.FC = () => {
   const { t, language } = useLanguage();
@@ -40,6 +40,13 @@ export const ContactCTA: React.FC = () => {
     setIsSubmitting(false);
 
     if (result.success) {
+      // Fire standard Meta Pixel & GA4 Lead events on successful submission
+      trackLeadEvent({
+        name: formData.name,
+        service: formData.service || 'General Inquiry',
+        budget: formData.budget || 'Custom',
+      });
+
       confetti({
         particleCount: 120,
         spread: 80,
