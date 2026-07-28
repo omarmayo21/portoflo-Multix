@@ -78,8 +78,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         throw new Error('Resend client is not initialized. Please configure RESEND_API_KEY.');
       }
       // A. Admin Notification Email
-      await resend.emails.send({
-        from: 'Multix Notification <noreply@multix.studio>',
+      const adminResponse = await resend.emails.send({
+        from: 'Multix Notification <onboarding@resend.dev>',
         to: adminEmail,
         subject: `🚨 New Lead: ${name} - Multix Studio`,
         html: `
@@ -126,11 +126,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           </div>
         `,
       });
+      console.log('[Resend Email API] Admin email Resend response:', adminResponse);
 
       // B. User Confirmation Email (Bilingual / Arabic focused)
       if (email !== 'Not Provided') {
-        await resend.emails.send({
-          from: 'Multix Studio <noreply@multix.studio>',
+        const userResponse = await resend.emails.send({
+          from: 'Multix Studio <onboarding@resend.dev>',
           to: email,
           subject: 'شكرًا لتواصلك مع Multix Studio | Thank you for contacting us',
           html: `
@@ -142,7 +143,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
               <div style="padding: 30px; background-color: #ffffff; color: #333333; line-height: 1.8;">
                 <h3 style="color: #0F1D38; margin-top: 0; font-size: 18px;">مرحباً ${name}،</h3>
                 <p style="font-size: 14px;">شكرًا لتواصلك معنا واهتمامك بخدماتنا في تطوير المواقع والأنظمة الرقمية.</p>
-                <p style="font-size: 14px;">لقد تم استلام تفاصيل مشروعك بنجاح، ويقوم فريقنا الهندسي حالياً بمراجعة متطلباتك بعناية لإعداد عرض سعر مناسب وخطة تنفيذ دقيقة.</p>
+                <p style="font-size: 14px;">لقد تم استلام تفاصيل مشروعك بنجاح، ويقوم فريقنا الهندسي حالياً بمراجعة متمتطلباتك بعناية لإعداد عرض سعر مناسب وخطة تنفيذ دقيقة.</p>
                 <p style="font-size: 14px; font-weight: bold; color: #FF5E3A;">سنتواصل معك خلال أقل من 12 ساعة لتنسيق الخطوات التالية ومناقشة تفاصيل المشروع.</p>
                 
                 <hr style="border: 0; border-top: 1px solid #eeeeee; margin: 25px 0;" />
@@ -159,10 +160,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             </div>
           `,
         });
+        console.log('[Resend Email API] User confirmation Resend response:', userResponse);
       }
     } catch (err: any) {
       console.error('[Resend Email API] Failed to send email via Resend:', err.message || err);
-      // We catch this error specifically so we do not interrupt the database save / user response flow
+      if (err.response) {
+        console.error('[Resend Email API] Resend API Error Response details:', JSON.stringify(err.response));
+      }
     }
 
     // 4. Update Sanity document to prevent duplicate notifications
