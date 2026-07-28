@@ -169,22 +169,22 @@ export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
       </header>
 
       {/* Main Hero & Lead Form Section */}
-      <section className="py-6 sm:py-16 relative overflow-hidden">
+      <section className="py-8 sm:py-16 relative overflow-hidden">
         {/* Ambient Radial Lights */}
         <div className="absolute top-1/4 right-10 w-[500px] h-[500px] bg-[#2A4073]/25 rounded-full blur-[160px] pointer-events-none" />
         <div className="absolute top-1/3 left-10 w-[500px] h-[500px] bg-[#FF5E3A]/15 rounded-full blur-[150px] pointer-events-none" />
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-8 items-center">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
           
           {/* MOBILE FIRST: Form is FIRST on mobile (order-1), copy is SECOND (order-2). Desktop maintains natural RTL layout */}
           
           {/* 1. Lead Capture Form Box (First thing on Mobile above the fold) */}
           <div id="lead-form-hero" className="order-1 lg:order-2 lg:col-span-5 w-full">
             <motion.div
-              initial={{ opacity: 0, scale: 0.96, y: 15 }}
+              initial={{ opacity: 0, scale: 0.97, y: 15 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-              className="p-6 sm:p-9 rounded-3xl bg-[#0F1D38]/95 border border-white/15 backdrop-blur-2xl shadow-2xl space-y-5 relative border-t-4 border-t-[#FF5E3A]"
+              className="p-6 sm:p-8 rounded-3xl bg-[#0F1D38]/95 border border-white/15 backdrop-blur-2xl shadow-2xl space-y-5 relative border-t-4 border-t-[#FF5E3A]"
             >
               <div className="space-y-1 text-start">
                 <span className="text-[11px] sm:text-xs font-bold uppercase tracking-widest text-[#FF5E3A]">
@@ -206,8 +206,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
                 </div>
               )}
 
-              <form onSubmit={handleSubmit} className="space-y-4 text-start">
-                {/* Honeypot Spam Protection */}
+              <form onSubmit={handleSubmit} className="space-y-3.5 text-start">
+                {/* Honeypot Spam Protection Check */}
                 <input
                   type="text"
                   name="honeypot"
@@ -220,7 +220,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
 
                 {/* 1. Full Name (Required) */}
                 <div>
-                  <label className="block text-xs font-bold tracking-wider text-slate-300 mb-1.5">
+                  <label className="block text-xs font-bold tracking-wider text-slate-300 mb-1">
                     الاسم الكامل *
                   </label>
                   <input
@@ -233,13 +233,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
                       if (validationError) setValidationError(null);
                     }}
                     placeholder="أدخل اسمك الكامل"
-                    className="w-full px-4 py-3.5 rounded-2xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-[#FF5E3A] transition-colors text-sm"
+                    className="w-full px-4 py-3 rounded-2xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-[#FF5E3A] transition-colors text-sm"
                   />
                 </div>
 
                 {/* 2. Phone Number (Required) */}
                 <div>
-                  <label className="block text-xs font-bold tracking-wider text-slate-300 mb-1.5">
+                  <label className="block text-xs font-bold tracking-wider text-slate-300 mb-1">
                     رقم الهاتف / الواتساب *
                   </label>
                   <input
@@ -252,13 +252,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
                     }}
                     placeholder="+966 50 000 0000"
                     dir="ltr"
-                    className="w-full px-4 py-3.5 rounded-2xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-[#FF5E3A] transition-colors text-sm text-right"
+                    className="w-full px-4 py-3 rounded-2xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-[#FF5E3A] transition-colors text-sm text-right"
                   />
                 </div>
 
                 {/* 3. Project Details (Required) */}
                 <div>
-                  <label className="block text-xs font-bold tracking-wider text-slate-300 mb-1.5">
+                  <label className="block text-xs font-bold tracking-wider text-slate-300 mb-1">
                     تفاصيل مشروعك واحتياجاتك *
                   </label>
                   <textarea
@@ -270,19 +270,19 @@ export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
                       if (validationError) setValidationError(null);
                     }}
                     placeholder="اكتب نبذة مختصرة عن نوع الموقع والأهداف المطلوب تحقيقها..."
-                    className="w-full px-4 py-3.5 rounded-2xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-[#FF5E3A] transition-colors resize-none text-sm"
+                    className="w-full px-4 py-3 rounded-2xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-[#FF5E3A] transition-colors resize-none text-sm"
                   />
                 </div>
 
                 {/* 4. Budget (Optional) */}
                 <div>
-                  <label className="block text-xs font-bold tracking-wider text-slate-400 mb-1.5">
+                  <label className="block text-xs font-bold tracking-wider text-slate-400 mb-1">
                     الميزانية التقديرية (اختياري)
                   </label>
                   <select
                     value={formData.budget}
                     onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
-                    className="w-full px-4 py-3.5 rounded-2xl bg-[#0F1D38] border border-white/10 text-slate-200 focus:outline-none focus:border-[#FF5E3A] transition-colors text-sm"
+                    className="w-full px-4 py-3 rounded-2xl bg-[#0F1D38] border border-white/10 text-slate-200 focus:outline-none focus:border-[#FF5E3A] transition-colors text-sm"
                   >
                     <option value="">حدد الميزانية المناسبة لمشروعك</option>
                     <option value="10k-20k">10,000 $ – 20,000 $</option>
@@ -295,7 +295,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full py-4 rounded-2xl bg-gradient-to-r from-[#2A4073] to-[#FF5E3A] text-white font-bold text-center shadow-glow-accent hover:shadow-[0_0_35px_#FF5E3A] transition-all flex items-center justify-center gap-2 text-base mt-2"
+                  className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-[#2A4073] to-[#FF5E3A] text-white font-bold text-center shadow-glow-accent hover:shadow-[0_0_35px_#FF5E3A] transition-all flex items-center justify-center gap-2 text-base mt-2"
                 >
                   {isSubmitting ? (
                     <span>جاري إرسال الطلب...</span>
@@ -314,10 +314,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
             </motion.div>
           </div>
 
-          {/* 2. Persuasive Arabic Copy & Highlights (Order 2 on mobile, order 1 on desktop) */}
+          {/* 2. Persuasive Arabic Copy & Refined Feature Cards (Order 2 on mobile, order 1 on desktop) */}
           <div className="order-2 lg:order-1 lg:col-span-7 space-y-6 text-center lg:text-start">
             
-            {/* Offer Pill */}
+            {/* Offer Badge */}
             <motion.div
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
@@ -327,40 +327,46 @@ export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
               <Sparkles className="w-4 h-4" /> عرض حصري لحملات الإعلانات 2026
             </motion.div>
 
-            {/* Headline */}
+            {/* Refined Headline (Balanced line height & size) */}
             <motion.h1
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.1 }}
-              className="text-3xl sm:text-5xl lg:text-6xl font-black text-white leading-[1.2] tracking-tight"
+              className="text-2xl sm:text-4xl lg:text-5xl font-black text-white leading-[1.25] tracking-tight max-w-2xl mx-auto lg:mx-0"
             >
               {heroTitle}
             </motion.h1>
 
-            {/* Subheadline */}
+            {/* Refined Subheadline */}
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
-              className="text-slate-300 text-base sm:text-lg leading-relaxed max-w-2xl mx-auto lg:mx-0 font-normal"
+              className="text-slate-300 text-sm sm:text-base leading-relaxed max-w-xl mx-auto lg:mx-0 font-normal"
             >
               {heroSubtitle}
             </motion.p>
 
-            {/* Key Highlights Grid */}
+            {/* Enhanced Feature Highlights Cards Grid */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3 }}
-              className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 text-start max-w-xl mx-auto lg:mx-0"
+              className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-2 text-start max-w-2xl mx-auto lg:mx-0"
             >
               {highlights.map((item, idx) => (
-                <div key={idx} className="flex items-center gap-3 p-3 rounded-2xl bg-white/5 border border-white/10">
-                  <CheckCircle2 className="w-5 h-5 text-[#FF5E3A] shrink-0" />
-                  <span className="text-xs font-semibold text-slate-200">{item}</span>
+                <div
+                  key={idx}
+                  className="flex items-center gap-3.5 p-3.5 rounded-2xl bg-[#091224]/80 border border-white/10 hover:border-[#FF5E3A]/40 transition-all shadow-sm"
+                >
+                  <div className="w-8 h-8 rounded-xl bg-[#FF5E3A]/15 flex items-center justify-center shrink-0 text-[#FF5E3A]">
+                    <CheckCircle2 className="w-4 h-4" />
+                  </div>
+                  <span className="text-xs font-semibold text-slate-200 leading-snug">{item}</span>
                 </div>
               ))}
             </motion.div>
+
           </div>
 
         </div>
