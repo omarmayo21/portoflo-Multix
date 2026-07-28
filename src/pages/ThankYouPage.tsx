@@ -34,19 +34,35 @@ export const ThankYouPage: React.FC = () => {
       .catch(() => {});
   }, []);
 
-  const title = pageData?.title?.[language] || pageData?.title?.en || 'Thank You for Reaching Out!';
+  const isAr = language === 'ar' || true; // Default to Arabic for campaign user intent
+
+  const title =
+    pageData?.title?.[language] ||
+    pageData?.title?.ar ||
+    (isAr ? 'تم استلام طلبك بنجاح' : 'Thank You for Reaching Out!');
+
   const subtitle =
     pageData?.subtitle?.[language] ||
-    pageData?.subtitle?.en ||
-    'Your inquiry has been logged successfully. A Senior Creative Director will review your project details and respond within 12 hours.';
-  const ctaText = pageData?.ctaText?.[language] || pageData?.ctaText?.en || 'Return to Home';
+    pageData?.subtitle?.ar ||
+    (isAr
+      ? 'شكرًا لتواصلك معنا. تم استلام بياناتك بنجاح، وسيقوم أحد أعضاء فريق Multix بمراجعة طلبك والتواصل معك خلال أقل من 12 ساعة.'
+      : 'Your inquiry has been logged successfully. A Senior Director will review your project details and respond within 12 hours.');
+
+  const ctaText =
+    pageData?.ctaText?.[language] ||
+    pageData?.ctaText?.ar ||
+    (isAr ? 'العودة للرئيسية' : 'Return to Home');
+
   const whatsappNumber =
     pageData?.whatsappNumber ||
     websiteContent?.contactPhone?.replace(/[^0-9]/g, '') ||
-    '971501234567';
+    '966500000000';
 
   return (
-    <div className="min-h-screen bg-[#0F1D38] text-white flex items-center justify-center px-4 py-20 relative overflow-hidden">
+    <div
+      dir={isAr ? 'rtl' : 'ltr'}
+      className="min-h-screen bg-[#0F1D38] text-white flex items-center justify-center px-4 py-20 relative overflow-hidden font-sans"
+    >
       {/* Background Glow */}
       <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#FF5E3A]/15 rounded-full blur-[180px] pointer-events-none" />
       <div className="absolute bottom-10 right-10 w-[400px] h-[400px] bg-[#2A4073]/30 rounded-full blur-[150px] pointer-events-none" />
@@ -55,7 +71,7 @@ export const ThankYouPage: React.FC = () => {
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-        className="max-w-2xl w-full p-8 sm:p-12 rounded-3xl bg-[#0F1D38]/90 border border-white/10 backdrop-blur-2xl shadow-2xl text-center space-y-8 relative z-10"
+        className="max-w-2xl w-full p-8 sm:p-12 rounded-3xl bg-[#0F1D38]/90 border border-white/10 backdrop-blur-2xl shadow-2xl text-center space-y-8 relative z-10 border-t-2 border-t-[#FF5E3A]"
       >
         <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-[#FF5E3A] to-[#2A4073] p-1 mx-auto shadow-glow-accent">
           <div className="w-full h-full rounded-full bg-[#0F1D38] flex items-center justify-center text-[#FF5E3A]">
@@ -65,42 +81,56 @@ export const ThankYouPage: React.FC = () => {
 
         <div className="space-y-3">
           <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#FF5E3A]/20 text-[#FF5E3A] text-xs font-bold font-heading uppercase tracking-wider">
-            <Sparkles className="w-4 h-4" /> Submission Confirmed
+            <Sparkles className="w-4 h-4" /> {isAr ? 'تم تأكيد الإرسال بنجاح' : 'Submission Confirmed'}
           </span>
-          <h1 className="text-3xl sm:text-4xl font-extrabold font-heading text-white">
+          <h1 className="text-3xl sm:text-4xl font-extrabold font-heading text-white leading-snug">
             {title}
           </h1>
-          <p className="text-slate-300 text-base max-w-lg mx-auto">
+          <p className="text-slate-300 text-base max-w-lg mx-auto leading-relaxed">
             {subtitle}
           </p>
         </div>
 
-        <div className="p-6 rounded-2xl bg-white/5 border border-white/10 text-left space-y-3">
-          <h4 className="text-xs uppercase tracking-wider text-slate-400 font-bold font-heading">Next Steps</h4>
-          <ul className="text-sm text-slate-200 space-y-2 list-disc list-inside">
-            <li>We review your requirements and campaign goals.</li>
-            <li>We prepare a custom project proposal & timeline estimate.</li>
-            <li>We schedule an intro strategy call.</li>
+        {/* Next Steps List */}
+        <div className="p-6 rounded-2xl bg-white/5 border border-white/10 text-start space-y-3">
+          <h4 className="text-xs uppercase tracking-wider text-[#FF5E3A] font-bold font-heading">
+            {isAr ? 'الخطوات التالية:' : 'Next Steps'}
+          </h4>
+          <ul className="text-sm text-slate-200 space-y-2.5 list-disc list-inside">
+            {isAr ? (
+              <>
+                <li>مراجعة تفاصيل مشروعك.</li>
+                <li>إعداد عرض سعر وخطة تنفيذ مناسبة لاحتياجاتك.</li>
+                <li>التواصل معك لتحديد أفضل الحلول المناسبة لمشروعك.</li>
+              </>
+            ) : (
+              <>
+                <li>We review your project details and requirements.</li>
+                <li>We prepare a custom proposal and execution strategy.</li>
+                <li>We reach out to align on the best solutions for your goals.</li>
+              </>
+            )}
           </ul>
         </div>
 
+        {/* Call-to-action buttons */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
           <a
             href="/"
-            className="w-full sm:w-auto px-8 py-3.5 rounded-full bg-gradient-to-r from-[#2A4073] to-[#FF5E3A] text-white font-bold font-heading shadow-glow-accent hover:shadow-[0_0_30px_#FF5E3A] transition-all flex items-center justify-center gap-2"
+            className="w-full sm:w-auto px-8 py-3.5 rounded-full bg-gradient-to-r from-[#2A4073] to-[#FF5E3A] text-white font-bold font-heading shadow-glow-accent hover:shadow-[0_0_30px_#FF5E3A] transition-all flex items-center justify-center gap-2 text-sm"
           >
             <span>{ctaText}</span>
-            <ArrowRight className="w-5 h-5" />
+            <ArrowRight className={`w-5 h-5 ${isAr ? 'rotate-180' : ''}`} />
           </a>
 
           <a
             href={`https://wa.me/${whatsappNumber}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="w-full sm:w-auto px-8 py-3.5 rounded-full bg-white/10 hover:bg-white/20 text-white font-bold font-heading border border-white/10 transition-all flex items-center justify-center gap-2"
+            className="w-full sm:w-auto px-8 py-3.5 rounded-full bg-white/10 hover:bg-white/20 text-white font-bold font-heading border border-white/10 transition-all flex items-center justify-center gap-2 text-sm"
           >
             <MessageSquare className="w-5 h-5 text-[#25D366]" />
-            <span>Chat on WhatsApp</span>
+            <span>{isAr ? 'الدردشة عبر الواتساب' : 'Chat on WhatsApp'}</span>
           </a>
         </div>
       </motion.div>

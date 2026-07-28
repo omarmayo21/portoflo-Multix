@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, CheckCircle2, Send, ShieldCheck, Zap, Star, MessageSquare, ArrowRight, Plus, Minus } from 'lucide-react';
+import { Sparkles, CheckCircle2, Send, ShieldCheck, Zap, Star, MessageSquare, ArrowLeft, Plus, Minus, Lock } from 'lucide-react';
 import { sanityClient, urlFor } from '../lib/sanity/client';
 import { LANDING_PAGE_BY_SLUG_QUERY, TESTIMONIALS_QUERY, FAQS_QUERY } from '../lib/sanity/queries';
 import { submitLeadForm } from '../lib/sanity/submitLead';
@@ -39,22 +39,22 @@ export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
         if (pageRes) {
           setData(pageRes);
           updateSeoMeta({
-            title: pageRes.seoTitle || `${pageRes.pageName} | MULTIX Studio`,
-            description: pageRes.seoDescription,
+            title: pageRes.seoTitle || `احصل على موقع إلكتروني احترافي | MULTIX Studio`,
+            description: pageRes.seoDescription || `نصمم ونطور مواقع إلكترونية سريعة واحترافية متوافقة مع حملات Meta Ads.`,
             canonicalUrl: pageRes.canonicalUrl,
           });
         } else {
           updateSeoMeta({
-            title: `Build Your High-Converting Website | MULTIX Studio`,
-            description: `High-converting Meta Ads landing page architecture for ${slug}.`,
+            title: `احصل على موقع إلكتروني احترافي يزيد مبيعاتك | MULTIX Studio`,
+            description: `تصميم وتطوير مواقع إلكترونية احترافية مخصصة لحملات Meta Ads.`,
           });
         }
 
         if (testRes && testRes.length > 0) setTestimonials(testRes.slice(0, 3));
         if (faqRes && faqRes.length > 0) setFaqs(faqRes.slice(0, 4));
 
-        // Fire PageView & ViewContent analytics event for campaign tracking
-        trackViewContent(pageRes?.pageName || `Campaign: ${slug}`, 'Meta Ads Landing Page');
+        // Fire PageView & ViewContent analytics event for Meta Ads tracking
+        trackViewContent(pageRes?.pageName || `حملة إعلانات: ${slug}`, 'Meta Ads Campaign Landing Page');
       } catch (err) {
         console.warn('Error fetching landing page data:', err);
       } finally {
@@ -70,17 +70,17 @@ export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
     if (!formData.name || !formData.phone || !formData.message) return;
 
     setIsSubmitting(true);
-    trackCtaClick('Meta Ads Landing Page Submit', data?.pageName || slug);
+    trackCtaClick('Meta Ads Campaign Form Submit', data?.pageName || slug);
 
-    // Save lead to Sanity & fire standard Meta Pixel 'Lead' event + GA4 generate_lead
+    // Save lead in Sanity & fire standard Meta Pixel 'Lead' event + GA4 generate_lead
     const result = await submitLeadForm({
       name: formData.name,
       phone: formData.phone,
-      service: data?.pageName || `Campaign: ${slug}`,
-      budget: formData.budget || 'Custom',
+      service: data?.pageName || `حملة إعلانات: ${slug}`,
+      budget: formData.budget || 'غير محدد',
       message: formData.message,
       honeypot: formData.honeypot,
-      ctaClicked: data?.primaryCtaText?.en || 'Meta Ads Above-The-Fold Form',
+      ctaClicked: 'نموذج طلب عرض سعر Meta Ads',
     });
 
     setIsSubmitting(false);
@@ -93,29 +93,44 @@ export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0F1D38] flex items-center justify-center text-white font-heading">
+      <div className="min-h-screen bg-[#0F1D38] flex items-center justify-center text-white font-sans" dir="rtl">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 border-2 border-[#FF5E3A] border-t-transparent rounded-full animate-spin" />
-          <span className="text-sm font-semibold tracking-wider uppercase">Loading Campaign Page...</span>
+          <span className="text-sm font-semibold tracking-wider">جاري تحميل الصفحة...</span>
         </div>
       </div>
     );
   }
 
-  // Dynamic titles with high-converting campaign fallbacks
-  const heroTitle = data?.heroTitle?.en || `Build Your High-Converting ${slug.replace('-', ' ')} Platform`;
+  // Arabic Hero Content (Custom or Sanity fallback)
+  const heroTitle =
+    data?.heroTitle?.ar ||
+    data?.heroTitle?.en ||
+    '🚀 احصل على موقع إلكتروني احترافي يزيد مبيعاتك ويحول الزوار إلى عملاء';
+
   const heroSubtitle =
+    data?.heroSubtitle?.ar ||
     data?.heroSubtitle?.en ||
-    'Custom 3D WebGL architecture, lightning-fast sub-100ms performance, and high-converting Meta Ads landing pages engineered for maximum ROI.';
-  const primaryCta = data?.primaryCtaText?.en || 'Get Your Free Proposal';
+    'نصمم ونطور مواقع إلكترونية سريعة، احترافية، ومتوافقة مع جميع الأجهزة، مع تجربة مستخدم مميزة تساعدك على زيادة العملاء وتحقيق أفضل نتائج من حملات Meta Ads.';
+
+  const primaryCta = data?.primaryCtaText?.ar || data?.primaryCtaText?.en || 'احصل على عرض سعر مجاناً';
+
+  const highlights = [
+    'تصميم احترافي مخصص بالكامل',
+    'متوافق مع جميع الأجهزة',
+    'ربط Meta Pixel وتتبع التحويلات',
+    'سرعة وأداء عالي',
+    'تحسين محركات البحث (SEO)',
+    'تسليم سريع خلال 7 أيام',
+  ];
 
   return (
-    <div className="min-h-screen bg-[#0F1D38] text-slate-100 selection:bg-[#FF5E3A] selection:text-white font-sans antialiased overflow-x-hidden relative">
+    <div dir="rtl" className="min-h-screen bg-[#0F1D38] text-slate-100 selection:bg-[#FF5E3A] selection:text-white font-sans antialiased overflow-x-hidden relative">
       
-      {/* Top Header Bar */}
+      {/* Top Navigation Bar */}
       <header className="py-5 px-4 sm:px-8 border-b border-white/10 bg-[#0F1D38]/90 backdrop-blur-xl sticky top-0 z-50 shadow-lg">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <a href="/" className="text-xl font-black font-heading tracking-wider text-white flex items-center gap-2.5">
+          <a href="/" className="text-xl font-black tracking-wider text-white flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#2A4073] to-[#FF5E3A] p-[1px] shadow-glow-accent">
               <div className="w-full h-full bg-[#0F1D38] rounded-[11px] flex items-center justify-center">
                 <Sparkles className="w-4 h-4 text-[#FF5E3A]" />
@@ -129,22 +144,22 @@ export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
           <a
             href="#lead-form-hero"
             onClick={() => trackCtaClick('Top Header CTA', data?.pageName)}
-            className="px-5 py-2.5 rounded-full bg-gradient-to-r from-[#2A4073] to-[#FF5E3A] text-white text-xs font-bold font-heading shadow-glow-accent hover:shadow-[0_0_25px_#FF5E3A] transition-all"
+            className="px-5 py-2.5 rounded-full bg-gradient-to-r from-[#2A4073] to-[#FF5E3A] text-white text-xs font-bold shadow-glow-accent hover:shadow-[0_0_25px_#FF5E3A] transition-all"
           >
             {primaryCta}
           </a>
         </div>
       </header>
 
-      {/* Main Hero & Above-The-Fold Form Section */}
-      <section className="py-12 sm:py-20 relative overflow-hidden">
+      {/* Main Hero & Above-The-Fold Lead Form Section */}
+      <section className="py-10 sm:py-16 relative overflow-hidden">
         {/* Radial Ambient Orbs */}
-        <div className="absolute top-1/4 left-10 w-[500px] h-[500px] bg-[#2A4073]/25 rounded-full blur-[160px] pointer-events-none" />
-        <div className="absolute top-1/3 right-10 w-[500px] h-[500px] bg-[#FF5E3A]/15 rounded-full blur-[150px] pointer-events-none" />
+        <div className="absolute top-1/4 right-10 w-[500px] h-[500px] bg-[#2A4073]/25 rounded-full blur-[160px] pointer-events-none" />
+        <div className="absolute top-1/3 left-10 w-[500px] h-[500px] bg-[#FF5E3A]/15 rounded-full blur-[150px] pointer-events-none" />
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 items-center">
           
-          {/* Left Column: High-Converting Copy & Trust Badges */}
+          {/* Right Column: High-Persuasion Arabic Copy & Highlights */}
           <div className="lg:col-span-7 space-y-6 text-center lg:text-start">
             
             {/* Offer Pill */}
@@ -152,9 +167,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
-              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#FF5E3A]/20 border border-[#FF5E3A]/40 text-[#FF5E3A] text-xs font-bold uppercase tracking-wider font-heading shadow-sm"
+              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#FF5E3A]/20 border border-[#FF5E3A]/40 text-[#FF5E3A] text-xs font-bold shadow-sm"
             >
-              <Sparkles className="w-4 h-4" /> Meta Ads Exclusive Special Offer 2026
+              <Sparkles className="w-4 h-4" /> عرض حصري لحملات الإعلانات 2026
             </motion.div>
 
             {/* Headline */}
@@ -162,12 +177,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.1 }}
-              className="text-3xl sm:text-5xl lg:text-6xl font-black font-heading text-white leading-[1.1] tracking-tight"
+              className="text-3xl sm:text-5xl lg:text-6xl font-black text-white leading-[1.2] tracking-tight"
             >
               {heroTitle}
             </motion.h1>
 
-            {/* Subtitle */}
+            {/* Subheadline */}
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -177,49 +192,39 @@ export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
               {heroSubtitle}
             </motion.p>
 
-            {/* High-Impact Bullet Points */}
+            {/* Key Highlights Grid */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3 }}
               className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 text-start max-w-xl mx-auto lg:mx-0"
             >
-              <div className="flex items-center gap-3 p-3 rounded-2xl bg-white/5 border border-white/10">
-                <CheckCircle2 className="w-5 h-5 text-[#FF5E3A] shrink-0" />
-                <span className="text-xs font-semibold text-slate-200">100% Custom 3D & WebGL Design</span>
-              </div>
-              <div className="flex items-center gap-3 p-3 rounded-2xl bg-white/5 border border-white/10">
-                <ShieldCheck className="w-5 h-5 text-[#FF5E3A] shrink-0" />
-                <span className="text-xs font-semibold text-slate-200">Meta Pixel & Lead Event Configured</span>
-              </div>
-              <div className="flex items-center gap-3 p-3 rounded-2xl bg-white/5 border border-white/10">
-                <Zap className="w-5 h-5 text-[#FF5E3A] shrink-0" />
-                <span className="text-xs font-semibold text-slate-200">Sub-100ms Page Load Speed</span>
-              </div>
-              <div className="flex items-center gap-3 p-3 rounded-2xl bg-white/5 border border-white/10">
-                <Star className="w-5 h-5 text-[#FF5E3A] shrink-0" />
-                <span className="text-xs font-semibold text-slate-200">Fast 12-Hour Proposal Delivery</span>
-              </div>
+              {highlights.map((item, idx) => (
+                <div key={idx} className="flex items-center gap-3 p-3 rounded-2xl bg-white/5 border border-white/10">
+                  <CheckCircle2 className="w-5 h-5 text-[#FF5E3A] shrink-0" />
+                  <span className="text-xs font-semibold text-slate-200">{item}</span>
+                </div>
+              ))}
             </motion.div>
           </div>
 
-          {/* Right Column: Above-The-Fold Lead Capture Form */}
+          {/* Left Column: Above-The-Fold Lead Capture Form */}
           <div id="lead-form-hero" className="lg:col-span-5">
             <motion.div
               initial={{ opacity: 0, scale: 0.96, y: 25 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-              className="p-8 sm:p-9 rounded-3xl bg-[#0F1D38]/95 border border-white/15 backdrop-blur-2xl shadow-2xl space-y-6 relative border-t-2 border-t-[#FF5E3A]"
+              className="p-7 sm:p-9 rounded-3xl bg-[#0F1D38]/95 border border-white/15 backdrop-blur-2xl shadow-2xl space-y-5 relative border-t-2 border-t-[#FF5E3A]"
             >
-              <div className="space-y-1">
-                <span className="text-xs font-bold font-heading uppercase tracking-widest text-[#FF5E3A]">
-                  Get Instant Access
+              <div className="space-y-1 text-start">
+                <span className="text-xs font-bold uppercase tracking-widest text-[#FF5E3A]">
+                  احصل على استشارة مجانية
                 </span>
-                <h3 className="text-2xl font-bold font-heading text-white">
-                  Request Your Custom Proposal
+                <h3 className="text-2xl font-bold text-white">
+                  طلب عرض سعر وخطة عمل
                 </h3>
                 <p className="text-xs text-slate-400">
-                  Fill out your project details below to receive a free strategy call & quote within 12 hours.
+                  أدخل بياناتك وسيقوم أحد خبراء التطوير بالتواصل معك خلال أقل من 12 ساعة.
                 </p>
               </div>
 
@@ -237,8 +242,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
 
                 {/* 1. Full Name (Required) */}
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 font-heading mb-1.5">
-                    Full Name *
+                  <label className="block text-xs font-bold tracking-wider text-slate-300 mb-1.5">
+                    الاسم الكامل *
                   </label>
                   <input
                     type="text"
@@ -246,15 +251,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
                     onFocus={trackFormStart}
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="Enter your full name"
+                    placeholder="أدخل اسمك الكامل"
                     className="w-full px-4 py-3.5 rounded-2xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-[#FF5E3A] transition-colors text-sm"
                   />
                 </div>
 
                 {/* 2. Phone Number (Required) */}
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 font-heading mb-1.5">
-                    Phone Number / WhatsApp *
+                  <label className="block text-xs font-bold tracking-wider text-slate-300 mb-1.5">
+                    رقم الهاتف / الواتساب *
                   </label>
                   <input
                     type="tel"
@@ -262,39 +267,40 @@ export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     placeholder="+966 50 000 0000"
-                    className="w-full px-4 py-3.5 rounded-2xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-[#FF5E3A] transition-colors text-sm"
+                    dir="ltr"
+                    className="w-full px-4 py-3.5 rounded-2xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-[#FF5E3A] transition-colors text-sm text-right"
                   />
                 </div>
 
                 {/* 3. Project Details (Required) */}
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 font-heading mb-1.5">
-                    Project Details & Goals *
+                  <label className="block text-xs font-bold tracking-wider text-slate-300 mb-1.5">
+                    تفاصيل مشروعك واحتياجاتك *
                   </label>
                   <textarea
                     rows={3}
                     required
                     value={formData.message}
                     onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                    placeholder="Briefly describe your project requirements..."
+                    placeholder="اكتب نبذة مختصرة عن نوع الموقع والأهداف المطلوب تحقيقها..."
                     className="w-full px-4 py-3.5 rounded-2xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-[#FF5E3A] transition-colors resize-none text-sm"
                   />
                 </div>
 
                 {/* 4. Budget (Optional) */}
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 font-heading mb-1.5">
-                    Estimated Budget (Optional)
+                  <label className="block text-xs font-bold tracking-wider text-slate-400 mb-1.5">
+                    الميزانية التقديرية (اختياري)
                   </label>
                   <select
                     value={formData.budget}
                     onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
                     className="w-full px-4 py-3.5 rounded-2xl bg-[#0F1D38] border border-white/10 text-slate-200 focus:outline-none focus:border-[#FF5E3A] transition-colors text-sm"
                   >
-                    <option value="">Select an estimated budget range</option>
-                    <option value="10k-20k">$10,000 – $20,000</option>
-                    <option value="20k-50k">$20,000 – $50,000</option>
-                    <option value="50k+">$50,000+</option>
+                    <option value="">حدد الميزانية المناسبة لمشروعك</option>
+                    <option value="10k-20k">10,000 $ – 20,000 $</option>
+                    <option value="20k-50k">20,000 $ – 50,000 $</option>
+                    <option value="50k+">أكثر من 50,000 $</option>
                   </select>
                 </div>
 
@@ -302,20 +308,20 @@ export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full py-4 rounded-2xl bg-gradient-to-r from-[#2A4073] to-[#FF5E3A] text-white font-bold font-heading text-center shadow-glow-accent hover:shadow-[0_0_35px_#FF5E3A] transition-all flex items-center justify-center gap-2 text-base mt-2"
+                  className="w-full py-4 rounded-2xl bg-gradient-to-r from-[#2A4073] to-[#FF5E3A] text-white font-bold text-center shadow-glow-accent hover:shadow-[0_0_35px_#FF5E3A] transition-all flex items-center justify-center gap-2 text-base mt-2"
                 >
                   {isSubmitting ? (
-                    <span>Submitting Inquiry...</span>
+                    <span>جاري إرسال الطلب...</span>
                   ) : (
                     <>
                       <span>{primaryCta}</span>
-                      <Send className="w-5 h-5" />
+                      <ArrowLeft className="w-5 h-5" />
                     </>
                   )}
                 </button>
 
-                <p className="text-[11px] text-slate-400 text-center pt-1">
-                  🔒 Your information is 100% confidential. No spam guaranteed.
+                <p className="text-[11px] text-slate-400 text-center pt-1 flex items-center justify-center gap-1.5">
+                  <Lock className="w-3.5 h-3.5 text-[#FF5E3A]" /> بياناتك آمنة ومحمية 100%. لا نرسل رسائل مزعجة.
                 </p>
               </form>
             </motion.div>
@@ -328,34 +334,34 @@ export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
         <section className="py-16 bg-[#091224] border-t border-white/10 relative overflow-hidden">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center space-y-2 mb-12">
-              <span className="text-xs font-bold font-heading uppercase tracking-widest text-[#FF5E3A]">
-                Client Reviews
+              <span className="text-xs font-bold uppercase tracking-widest text-[#FF5E3A]">
+                آراء عملائنا
               </span>
-              <h2 className="text-3xl font-extrabold font-heading text-white">
-                Trusted by Forward-Thinking Brands
+              <h2 className="text-3xl font-extrabold text-white">
+                ثقة الشركات والعلامات التجارية الرائدة
               </h2>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {testimonials.map((item, idx) => (
-                <div key={item._id || idx} className="p-6 rounded-3xl bg-[#0F1D38]/80 border border-white/10 space-y-4">
+                <div key={item._id || idx} className="p-6 rounded-3xl bg-[#0F1D38]/80 border border-white/10 space-y-4 text-start">
                   <div className="flex items-center gap-1">
                     {[...Array(item.rating || 5)].map((_, i) => (
                       <Star key={i} className="w-4 h-4 fill-[#FF5E3A] text-[#FF5E3A]" />
                     ))}
                   </div>
                   <p className="text-sm text-slate-200 leading-relaxed italic">
-                    "{item.review?.en || item.review}"
+                    "{item.review?.ar || item.review?.en || item.review}"
                   </p>
                   <div className="pt-4 border-t border-white/10 flex items-center gap-3">
                     <img
                       src={item.avatar ? urlFor(item.avatar).width(80).url() : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb'}
-                      alt={item.name?.en || item.name}
+                      alt={item.name?.ar || item.name?.en || item.name}
                       className="w-10 h-10 rounded-full object-cover border border-[#FF5E3A]"
                     />
                     <div>
-                      <h4 className="text-xs font-bold text-white font-heading">{item.name?.en || item.name}</h4>
-                      <p className="text-[11px] text-slate-400">{item.role?.en || item.role} — <span className="text-[#FF5E3A]">{item.company}</span></p>
+                      <h4 className="text-xs font-bold text-white">{item.name?.ar || item.name?.en || item.name}</h4>
+                      <p className="text-[11px] text-slate-400">{item.role?.ar || item.role?.en || item.role} — <span className="text-[#FF5E3A]">{item.company}</span></p>
                     </div>
                   </div>
                 </div>
@@ -370,11 +376,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
         <section className="py-16 bg-[#0F1D38] border-t border-white/10 relative overflow-hidden">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center space-y-2 mb-10">
-              <span className="text-xs font-bold font-heading uppercase tracking-widest text-[#FF5E3A]">
-                Campaign FAQ
+              <span className="text-xs font-bold uppercase tracking-widest text-[#FF5E3A]">
+                الأسئلة الشائعة
               </span>
-              <h2 className="text-3xl font-extrabold font-heading text-white">
-                Frequently Asked Questions
+              <h2 className="text-3xl font-extrabold text-white">
+                إجابات على استفساراتك قبل البدء
               </h2>
             </div>
 
@@ -386,9 +392,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
                   <div key={id} className="rounded-2xl bg-[#091224]/80 border border-white/10 overflow-hidden">
                     <button
                       onClick={() => setOpenFaqId(isOpen ? null : id)}
-                      className="w-full p-5 text-start flex items-center justify-between gap-4 font-bold font-heading text-base text-white hover:text-[#FF5E3A] transition-colors"
+                      className="w-full p-5 text-start flex items-center justify-between gap-4 font-bold text-base text-white hover:text-[#FF5E3A] transition-colors"
                     >
-                      <span>{faq.question?.en || faq.question}</span>
+                      <span>{faq.question?.ar || faq.question?.en || faq.question}</span>
                       <div className={`p-1.5 rounded-full ${isOpen ? 'bg-[#FF5E3A] text-white' : 'bg-[#2A4073]/40 text-slate-300'}`}>
                         {isOpen ? <Minus className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
                       </div>
@@ -399,9 +405,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
                           initial={{ height: 0, opacity: 0 }}
                           animate={{ height: 'auto', opacity: 1 }}
                           exit={{ height: 0, opacity: 0 }}
-                          className="px-5 pb-5 text-xs sm:text-sm text-slate-300 leading-relaxed border-t border-white/5 pt-3"
+                          className="px-5 pb-5 text-xs sm:text-sm text-slate-300 leading-relaxed border-t border-white/5 pt-3 text-start"
                         >
-                          {faq.answer?.en || faq.answer}
+                          {faq.answer?.ar || faq.answer?.en || faq.answer}
                         </motion.div>
                       )}
                     </AnimatePresence>
@@ -418,7 +424,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
         <a
           href="#lead-form-hero"
           onClick={() => trackCtaClick('Sticky Mobile CTA', data?.pageName || slug)}
-          className="w-full py-3.5 rounded-full bg-gradient-to-r from-[#2A4073] to-[#FF5E3A] text-white font-bold font-heading text-center block shadow-glow-accent text-sm"
+          className="w-full py-3.5 rounded-full bg-gradient-to-r from-[#2A4073] to-[#FF5E3A] text-white font-bold text-center block shadow-glow-accent text-sm"
         >
           {primaryCta}
         </a>
