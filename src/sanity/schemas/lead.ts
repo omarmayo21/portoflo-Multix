@@ -141,6 +141,12 @@ export const lead = defineType({
       initialValue: 'New',
     }),
     defineField({
+      name: 'emailSent',
+      title: 'Email Notifications Sent',
+      type: 'boolean',
+      initialValue: false,
+    }),
+    defineField({
       name: 'internalNotes',
       title: 'Internal Notes (Private)',
       type: 'text',

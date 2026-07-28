@@ -54,6 +54,28 @@ export const ContactCTA: React.FC = () => {
         colors: ['#2A4073', '#FF5E3A', '#FFFFFF'],
       });
 
+      // Send email notifications via Resend API in background (keepalive ensures it completes during redirect)
+      if (result.leadId) {
+        fetch('/api/send-email', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            leadId: result.leadId,
+            leadData: {
+              fullName: formData.name,
+              phone: formData.phone,
+              email: formData.email,
+              message: formData.message,
+              projectType: formData.service || 'General Inquiry',
+              submissionDate: new Date().toISOString(),
+            }
+          }),
+          keepalive: true,
+        }).catch((err) => console.warn('Email notification error:', err));
+      }
+
       // Redirect to Thank You page
       setTimeout(() => {
         window.location.href = '/thank-you';

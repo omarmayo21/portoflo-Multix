@@ -15,11 +15,11 @@ export interface FormSubmissionInput {
   ctaClicked?: string;
 }
 
-export async function submitLeadForm(input: FormSubmissionInput): Promise<{ success: boolean; error?: string }> {
+export async function submitLeadForm(input: FormSubmissionInput): Promise<{ success: boolean; leadId?: string; error?: string }> {
   // 1. Honeypot Spam Protection Check
   if (input.honeypot) {
     // Hidden honeypot field was filled by a bot -> silent rejection
-    return { success: true };
+    return { success: true, leadId: 'honeypot_bot' };
   }
 
   // 2. Gather tracking info
@@ -62,37 +62,42 @@ export async function submitLeadForm(input: FormSubmissionInput): Promise<{ succ
         token: import.meta.env.VITE_SANITY_WRITE_TOKEN,
       });
 
-      await writeClient.create({
+      const res = await writeClient.create({
         _type: 'lead',
         ...leadData,
         submissionDate: new Date().toISOString(),
         status: 'New',
+        emailSent: false,
       });
+      return { success: true, leadId: res._id };
     } else {
       // Offline / Local Development Fallback: Store lead in localStorage
+      const fallbackId = 'lead_' + Date.now();
       const existingLeads = JSON.parse(localStorage.getItem('multix_saved_leads') || '[]');
       existingLeads.unshift({
         ...leadData,
-        _id: 'lead_' + Date.now(),
+        _id: fallbackId,
         submissionDate: new Date().toISOString(),
         status: 'New',
+        emailSent: false,
       });
       localStorage.setItem('multix_saved_leads', JSON.stringify(existingLeads));
+      return { success: true, leadId: fallbackId };
     }
-
-    return { success: true };
   } catch (err: any) {
     console.warn('Lead submission error (falling back to local cache):', err);
     // Fallback save locally
+    const fallbackId = 'lead_' + Date.now();
     const existingLeads = JSON.parse(localStorage.getItem('multix_saved_leads') || '[]');
     existingLeads.unshift({
       ...leadData,
-      _id: 'lead_' + Date.now(),
+      _id: fallbackId,
       submissionDate: new Date().toISOString(),
       status: 'New',
+      emailSent: false,
     });
     localStorage.setItem('multix_saved_leads', JSON.stringify(existingLeads));
 
-    return { success: true };
+    return { success: true, leadId: fallbackId };
   }
 }

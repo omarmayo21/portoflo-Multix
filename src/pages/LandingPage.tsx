@@ -98,6 +98,28 @@ export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
         });
       }
 
+      // Send email notifications via Resend API in background (keepalive ensures it completes during redirect)
+      if (result.leadId) {
+        fetch('/api/send-email', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            leadId: result.leadId,
+            leadData: {
+              fullName: formData.name,
+              phone: formData.phone,
+              email: `${formData.phone.replace(/[^0-9]/g, '')}@lead.multix.studio`,
+              message: formData.message,
+              projectType: data?.pageName || `Campaign: ${slug}`,
+              submissionDate: new Date().toISOString(),
+            }
+          }),
+          keepalive: true,
+        }).catch((err) => console.warn('Email notification error:', err));
+      }
+
       window.location.href = '/thank-you';
     } else {
       setValidationError('حدث خطأ أثناء الإرسال. يرجى المحاولة مرة أخرى.');
