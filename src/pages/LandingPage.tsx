@@ -201,7 +201,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
 
                     <div>
                       <label className="block text-[11px] font-semibold text-slate-400 mb-1">رقم الهاتف *</label>
-                      <input type="tel" required value={formData.phone} onChange={(e) => { setFormData({ ...formData, phone: e.target.value }); clearError(); }} placeholder="+966 50 000 0000" dir="ltr" className="w-full px-4 py-3 rounded-xl bg-white/[0.04] border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-[#FF5E3A]/60 focus:bg-white/[0.06] transition-all text-sm text-right" />
+                      <input type="tel" required value={formData.phone} onChange={(e) => { setFormData({ ...formData, phone: e.target.value }); clearError(); }} placeholder="+201020047243" dir="ltr" className="w-full px-4 py-3 rounded-xl bg-white/[0.04] border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-[#FF5E3A]/60 focus:bg-white/[0.06] transition-all text-sm text-right" />
                     </div>
 
                     <div>
