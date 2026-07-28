@@ -5,7 +5,7 @@ import { trackLeadEvent } from '../../utils/analytics';
 
 export interface FormSubmissionInput {
   name: string;
-  email: string;
+  email?: string;
   phone?: string;
   company?: string;
   service?: string;
@@ -25,9 +25,13 @@ export async function submitLeadForm(input: FormSubmissionInput): Promise<{ succ
   // 2. Gather tracking info
   const utms = { ...getStoredUtms(), ...captureUtmParameters() };
 
+  const effectiveEmail =
+    input.email ||
+    (input.phone ? `${input.phone.replace(/[^0-9]/g, '')}@lead.multix.studio` : 'lead@multix.studio');
+
   const leadData: LeadPayload = {
     fullName: input.name,
-    email: input.email,
+    email: effectiveEmail,
     phone: input.phone,
     company: input.company,
     projectType: input.service,

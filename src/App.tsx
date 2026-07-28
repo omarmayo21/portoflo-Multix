@@ -70,7 +70,7 @@ export const MainPortfolio: React.FC = () => {
 
 const LandingPageRouteWrapper: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
-  return <LandingPage slug={slug || 'web-design'} />;
+  return <LandingPage slug={slug || 'web-development'} />;
 };
 
 export const AppRoutes: React.FC = () => {
@@ -79,6 +79,7 @@ export const AppRoutes: React.FC = () => {
       <Route path="/studio/*" element={<StudioPage />} />
       <Route path="/thank-you" element={<ThankYouPage />} />
       <Route path="/preview" element={<PreviewPage />} />
+      <Route path="/landing" element={<LandingPageRouteWrapper />} />
       <Route path="/landing/:slug" element={<LandingPageRouteWrapper />} />
       <Route path="*" element={<MainPortfolio />} />
     </Routes>

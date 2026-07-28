@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
-import { Sparkles, CheckCircle2, Send, ArrowRight, ShieldCheck, Star, HelpCircle } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Sparkles, CheckCircle2, Send, ShieldCheck, Zap, Star, MessageSquare, ArrowRight, Plus, Minus } from 'lucide-react';
 import { sanityClient, urlFor } from '../lib/sanity/client';
-import { LANDING_PAGE_BY_SLUG_QUERY } from '../lib/sanity/queries';
+import { LANDING_PAGE_BY_SLUG_QUERY, TESTIMONIALS_QUERY, FAQS_QUERY } from '../lib/sanity/queries';
 import { submitLeadForm } from '../lib/sanity/submitLead';
 import { trackViewContent, trackCtaClick, trackFormStart } from '../utils/analytics';
 import { updateSeoMeta } from '../utils/seo';
@@ -13,64 +13,80 @@ interface LandingPageProps {
 
 export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
   const [data, setData] = useState<any>(null);
+  const [testimonials, setTestimonials] = useState<any[]>([]);
+  const [faqs, setFaqs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
+  const [openFaqId, setOpenFaqId] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     name: '',
-    email: '',
     phone: '',
-    company: '',
-    service: '',
-    budget: '',
     message: '',
+    budget: '',
     honeypot: '',
   });
 
   useEffect(() => {
-    async function fetchLandingPage() {
+    async function fetchLandingPageData() {
       try {
-        const res = await sanityClient.fetch(LANDING_PAGE_BY_SLUG_QUERY, { slug });
-        if (res) {
-          setData(res);
+        const [pageRes, testRes, faqRes] = await Promise.all([
+          sanityClient.fetch(LANDING_PAGE_BY_SLUG_QUERY, { slug }),
+          sanityClient.fetch(TESTIMONIALS_QUERY),
+          sanityClient.fetch(FAQS_QUERY),
+        ]);
+
+        if (pageRes) {
+          setData(pageRes);
           updateSeoMeta({
-            title: res.seoTitle || `${res.pageName} | Multix Studio`,
-            description: res.seoDescription,
-            canonicalUrl: res.canonicalUrl,
+            title: pageRes.seoTitle || `${pageRes.pageName} | MULTIX Studio`,
+            description: pageRes.seoDescription,
+            canonicalUrl: pageRes.canonicalUrl,
           });
-          trackViewContent(res.pageName || slug, 'Campaign Landing Page');
+        } else {
+          updateSeoMeta({
+            title: `Build Your High-Converting Website | MULTIX Studio`,
+            description: `High-converting Meta Ads landing page architecture for ${slug}.`,
+          });
         }
+
+        if (testRes && testRes.length > 0) setTestimonials(testRes.slice(0, 3));
+        if (faqRes && faqRes.length > 0) setFaqs(faqRes.slice(0, 4));
+
+        // Fire PageView & ViewContent analytics event for campaign tracking
+        trackViewContent(pageRes?.pageName || `Campaign: ${slug}`, 'Meta Ads Landing Page');
       } catch (err) {
-        console.warn('Error fetching landing page:', err);
+        console.warn('Error fetching landing page data:', err);
       } finally {
         setLoading(false);
       }
     }
 
-    fetchLandingPage();
+    fetchLandingPageData();
   }, [slug]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
+    if (!formData.name || !formData.phone || !formData.message) return;
 
+    setIsSubmitting(true);
+    trackCtaClick('Meta Ads Landing Page Submit', data?.pageName || slug);
+
+    // Save lead to Sanity & fire standard Meta Pixel 'Lead' event + GA4 generate_lead
     const result = await submitLeadForm({
       name: formData.name,
-      email: formData.email,
       phone: formData.phone,
-      company: formData.company,
-      service: formData.service || data?.pageName,
-      budget: formData.budget,
+      service: data?.pageName || `Campaign: ${slug}`,
+      budget: formData.budget || 'Custom',
       message: formData.message,
       honeypot: formData.honeypot,
-      ctaClicked: data?.primaryCtaText?.en || 'Landing Page Form',
+      ctaClicked: data?.primaryCtaText?.en || 'Meta Ads Above-The-Fold Form',
     });
 
     setIsSubmitting(false);
 
     if (result.success) {
-      setSubmitted(true);
+      // Redirect immediately to Thank You page
       window.location.href = '/thank-you';
     }
   };
@@ -79,86 +95,136 @@ export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
     return (
       <div className="min-h-screen bg-[#0F1D38] flex items-center justify-center text-white font-heading">
         <div className="flex items-center gap-3">
-          <div className="w-6 h-6 border-2 border-[#FF5E3A] border-t-transparent rounded-full animate-spin" />
-          <span>Loading Landing Page...</span>
+          <div className="w-8 h-8 border-2 border-[#FF5E3A] border-t-transparent rounded-full animate-spin" />
+          <span className="text-sm font-semibold tracking-wider uppercase">Loading Campaign Page...</span>
         </div>
       </div>
     );
   }
 
-  // Fallback template if page slug not found in Sanity
-  const titleEn = data?.heroTitle?.en || `Build Your High-Converting ${slug.replace('-', ' ')} Website`;
-  const subtitleEn =
+  // Dynamic titles with high-converting campaign fallbacks
+  const heroTitle = data?.heroTitle?.en || `Build Your High-Converting ${slug.replace('-', ' ')} Platform`;
+  const heroSubtitle =
     data?.heroSubtitle?.en ||
-    'Custom 3D WebGL designs, blazingly fast load times, and high-converting Meta Ads landing architectures.';
+    'Custom 3D WebGL architecture, lightning-fast sub-100ms performance, and high-converting Meta Ads landing pages engineered for maximum ROI.';
+  const primaryCta = data?.primaryCtaText?.en || 'Get Your Free Proposal';
 
   return (
     <div className="min-h-screen bg-[#0F1D38] text-slate-100 selection:bg-[#FF5E3A] selection:text-white font-sans antialiased overflow-x-hidden relative">
-      {/* Header */}
-      <header className="py-6 px-4 sm:px-8 border-b border-white/10 bg-[#0F1D38]/80 backdrop-blur-xl sticky top-0 z-50">
+      
+      {/* Top Header Bar */}
+      <header className="py-5 px-4 sm:px-8 border-b border-white/10 bg-[#0F1D38]/90 backdrop-blur-xl sticky top-0 z-50 shadow-lg">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <a href="/" className="text-xl font-black font-heading tracking-wider text-white flex items-center gap-2">
-            <span className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#2A4073] to-[#FF5E3A] flex items-center justify-center text-white font-black text-sm">
-              M
+          <a href="/" className="text-xl font-black font-heading tracking-wider text-white flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#2A4073] to-[#FF5E3A] p-[1px] shadow-glow-accent">
+              <div className="w-full h-full bg-[#0F1D38] rounded-[11px] flex items-center justify-center">
+                <Sparkles className="w-4 h-4 text-[#FF5E3A]" />
+              </div>
+            </div>
+            <span>
+              MULTIX<span className="text-[#FF5E3A]">.</span>
             </span>
-            MULTIX STUDIO
           </a>
 
           <a
-            href="#lead-form"
-            onClick={() => trackCtaClick('Header CTA', data?.pageName)}
-            className="px-5 py-2.5 rounded-full bg-gradient-to-r from-[#2A4073] to-[#FF5E3A] text-white text-xs font-bold font-heading hover:shadow-glow-accent transition-all"
+            href="#lead-form-hero"
+            onClick={() => trackCtaClick('Top Header CTA', data?.pageName)}
+            className="px-5 py-2.5 rounded-full bg-gradient-to-r from-[#2A4073] to-[#FF5E3A] text-white text-xs font-bold font-heading shadow-glow-accent hover:shadow-[0_0_25px_#FF5E3A] transition-all"
           >
-            {data?.primaryCtaText?.en || 'Get Started Now'}
+            {primaryCta}
           </a>
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="py-20 relative overflow-hidden">
-        <div className="absolute top-1/4 left-10 w-96 h-96 bg-[#FF5E3A]/15 rounded-full blur-[160px] pointer-events-none" />
+      {/* Main Hero & Above-The-Fold Form Section */}
+      <section className="py-12 sm:py-20 relative overflow-hidden">
+        {/* Radial Ambient Orbs */}
+        <div className="absolute top-1/4 left-10 w-[500px] h-[500px] bg-[#2A4073]/25 rounded-full blur-[160px] pointer-events-none" />
+        <div className="absolute top-1/3 right-10 w-[500px] h-[500px] bg-[#FF5E3A]/15 rounded-full blur-[150px] pointer-events-none" />
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-          <div className="lg:col-span-7 space-y-6">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#FF5E3A]/20 text-[#FF5E3A] text-xs font-bold uppercase tracking-wider font-heading">
-              <Sparkles className="w-4 h-4" /> Exclusive Agency Special Offer
-            </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+          
+          {/* Left Column: High-Converting Copy & Trust Badges */}
+          <div className="lg:col-span-7 space-y-6 text-center lg:text-start">
+            
+            {/* Offer Pill */}
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#FF5E3A]/20 border border-[#FF5E3A]/40 text-[#FF5E3A] text-xs font-bold uppercase tracking-wider font-heading shadow-sm"
+            >
+              <Sparkles className="w-4 h-4" /> Meta Ads Exclusive Special Offer 2026
+            </motion.div>
 
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black font-heading text-white leading-tight">
-              {titleEn}
-            </h1>
+            {/* Headline */}
+            <motion.h1
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              className="text-3xl sm:text-5xl lg:text-6xl font-black font-heading text-white leading-[1.1] tracking-tight"
+            >
+              {heroTitle}
+            </motion.h1>
 
-            <p className="text-slate-300 text-lg leading-relaxed">{subtitleEn}</p>
+            {/* Subtitle */}
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="text-slate-300 text-base sm:text-lg leading-relaxed max-w-2xl mx-auto lg:mx-0 font-normal"
+            >
+              {heroSubtitle}
+            </motion.p>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-              <div className="flex items-center gap-3">
-                <CheckCircle2 className="w-5 h-5 text-[#FF5E3A]" />
-                <span className="text-sm text-slate-200">100% Custom 3D & WebGL Architecture</span>
+            {/* High-Impact Bullet Points */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 text-start max-w-xl mx-auto lg:mx-0"
+            >
+              <div className="flex items-center gap-3 p-3 rounded-2xl bg-white/5 border border-white/10">
+                <CheckCircle2 className="w-5 h-5 text-[#FF5E3A] shrink-0" />
+                <span className="text-xs font-semibold text-slate-200">100% Custom 3D & WebGL Design</span>
               </div>
-              <div className="flex items-center gap-3">
-                <CheckCircle2 className="w-5 h-5 text-[#FF5E3A]" />
-                <span className="text-sm text-slate-200">Meta Ads & Pixel Ready Conversion Setup</span>
+              <div className="flex items-center gap-3 p-3 rounded-2xl bg-white/5 border border-white/10">
+                <ShieldCheck className="w-5 h-5 text-[#FF5E3A] shrink-0" />
+                <span className="text-xs font-semibold text-slate-200">Meta Pixel & Lead Event Configured</span>
               </div>
-              <div className="flex items-center gap-3">
-                <CheckCircle2 className="w-5 h-5 text-[#FF5E3A]" />
-                <span className="text-sm text-slate-200">Sub-100ms Load Performance</span>
+              <div className="flex items-center gap-3 p-3 rounded-2xl bg-white/5 border border-white/10">
+                <Zap className="w-5 h-5 text-[#FF5E3A] shrink-0" />
+                <span className="text-xs font-semibold text-slate-200">Sub-100ms Page Load Speed</span>
               </div>
-              <div className="flex items-center gap-3">
-                <CheckCircle2 className="w-5 h-5 text-[#FF5E3A]" />
-                <span className="text-sm text-slate-200">Dedicated Creative Director Support</span>
+              <div className="flex items-center gap-3 p-3 rounded-2xl bg-white/5 border border-white/10">
+                <Star className="w-5 h-5 text-[#FF5E3A] shrink-0" />
+                <span className="text-xs font-semibold text-slate-200">Fast 12-Hour Proposal Delivery</span>
               </div>
-            </div>
+            </motion.div>
           </div>
 
-          {/* Form Box */}
-          <div id="lead-form" className="lg:col-span-5">
-            <div className="p-8 rounded-3xl bg-[#0F1D38]/90 border border-white/10 backdrop-blur-2xl shadow-2xl space-y-6">
-              <h3 className="text-2xl font-bold font-heading text-white">
-                {data?.primaryCtaText?.en || 'Request Your Proposal'}
-              </h3>
+          {/* Right Column: Above-The-Fold Lead Capture Form */}
+          <div id="lead-form-hero" className="lg:col-span-5">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96, y: 25 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+              className="p-8 sm:p-9 rounded-3xl bg-[#0F1D38]/95 border border-white/15 backdrop-blur-2xl shadow-2xl space-y-6 relative border-t-2 border-t-[#FF5E3A]"
+            >
+              <div className="space-y-1">
+                <span className="text-xs font-bold font-heading uppercase tracking-widest text-[#FF5E3A]">
+                  Get Instant Access
+                </span>
+                <h3 className="text-2xl font-bold font-heading text-white">
+                  Request Your Custom Proposal
+                </h3>
+                <p className="text-xs text-slate-400">
+                  Fill out your project details below to receive a free strategy call & quote within 12 hours.
+                </p>
+              </div>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
-                {/* Honeypot spam protection */}
+              <form onSubmit={handleSubmit} className="space-y-4 text-start">
+                {/* Honeypot Spam Protection */}
                 <input
                   type="text"
                   name="honeypot"
@@ -169,8 +235,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
                   autoComplete="off"
                 />
 
+                {/* 1. Full Name (Required) */}
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 font-heading mb-1">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 font-heading mb-1.5">
                     Full Name *
                   </label>
                   <input
@@ -179,83 +246,184 @@ export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
                     onFocus={trackFormStart}
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="John Doe"
-                    className="w-full px-4 py-3 rounded-2xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-[#FF5E3A]"
+                    placeholder="Enter your full name"
+                    className="w-full px-4 py-3.5 rounded-2xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-[#FF5E3A] transition-colors text-sm"
                   />
                 </div>
 
+                {/* 2. Phone Number (Required) */}
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 font-heading mb-1">
-                    Email Address *
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    placeholder="john@company.com"
-                    className="w-full px-4 py-3 rounded-2xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-[#FF5E3A]"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 font-heading mb-1">
-                    Phone / WhatsApp
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 font-heading mb-1.5">
+                    Phone Number / WhatsApp *
                   </label>
                   <input
                     type="tel"
+                    required
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    placeholder="+1 (555) 000-0000"
-                    className="w-full px-4 py-3 rounded-2xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-[#FF5E3A]"
+                    placeholder="+966 50 000 0000"
+                    className="w-full px-4 py-3.5 rounded-2xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-[#FF5E3A] transition-colors text-sm"
                   />
                 </div>
 
+                {/* 3. Project Details (Required) */}
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 font-heading mb-1">
-                    Project Message
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 font-heading mb-1.5">
+                    Project Details & Goals *
                   </label>
                   <textarea
                     rows={3}
+                    required
                     value={formData.message}
                     onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                    placeholder="Tell us about your project goals..."
-                    className="w-full px-4 py-3 rounded-2xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-[#FF5E3A] resize-none"
+                    placeholder="Briefly describe your project requirements..."
+                    className="w-full px-4 py-3.5 rounded-2xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-[#FF5E3A] transition-colors resize-none text-sm"
                   />
                 </div>
 
+                {/* 4. Budget (Optional) */}
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 font-heading mb-1.5">
+                    Estimated Budget (Optional)
+                  </label>
+                  <select
+                    value={formData.budget}
+                    onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
+                    className="w-full px-4 py-3.5 rounded-2xl bg-[#0F1D38] border border-white/10 text-slate-200 focus:outline-none focus:border-[#FF5E3A] transition-colors text-sm"
+                  >
+                    <option value="">Select an estimated budget range</option>
+                    <option value="10k-20k">$10,000 – $20,000</option>
+                    <option value="20k-50k">$20,000 – $50,000</option>
+                    <option value="50k+">$50,000+</option>
+                  </select>
+                </div>
+
+                {/* Submit Button */}
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full py-4 rounded-2xl bg-gradient-to-r from-[#2A4073] to-[#FF5E3A] text-white font-bold font-heading text-center shadow-glow-accent hover:shadow-[0_0_30px_#FF5E3A] transition-all flex items-center justify-center gap-2"
+                  className="w-full py-4 rounded-2xl bg-gradient-to-r from-[#2A4073] to-[#FF5E3A] text-white font-bold font-heading text-center shadow-glow-accent hover:shadow-[0_0_35px_#FF5E3A] transition-all flex items-center justify-center gap-2 text-base mt-2"
                 >
                   {isSubmitting ? (
-                    <span>Submitting...</span>
+                    <span>Submitting Inquiry...</span>
                   ) : (
                     <>
-                      <span>Submit Inquiry</span>
+                      <span>{primaryCta}</span>
                       <Send className="w-5 h-5" />
                     </>
                   )}
                 </button>
+
+                <p className="text-[11px] text-slate-400 text-center pt-1">
+                  🔒 Your information is 100% confidential. No spam guaranteed.
+                </p>
               </form>
-            </div>
+            </motion.div>
           </div>
         </div>
       </section>
 
-      {/* Sticky Mobile CTA */}
-      {data?.stickyMobileCta !== false && (
-        <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 bg-[#0F1D38]/95 backdrop-blur-xl border-t border-white/10 z-50">
-          <a
-            href="#lead-form"
-            onClick={() => trackCtaClick('Sticky Mobile CTA', data?.pageName)}
-            className="w-full py-3.5 rounded-full bg-gradient-to-r from-[#2A4073] to-[#FF5E3A] text-white font-bold font-heading text-center block shadow-glow-accent"
-          >
-            {data?.primaryCtaText?.en || 'Get Your Website Quote'}
-          </a>
-        </div>
+      {/* Social Proof & Testimonials Section */}
+      {testimonials.length > 0 && (
+        <section className="py-16 bg-[#091224] border-t border-white/10 relative overflow-hidden">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center space-y-2 mb-12">
+              <span className="text-xs font-bold font-heading uppercase tracking-widest text-[#FF5E3A]">
+                Client Reviews
+              </span>
+              <h2 className="text-3xl font-extrabold font-heading text-white">
+                Trusted by Forward-Thinking Brands
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {testimonials.map((item, idx) => (
+                <div key={item._id || idx} className="p-6 rounded-3xl bg-[#0F1D38]/80 border border-white/10 space-y-4">
+                  <div className="flex items-center gap-1">
+                    {[...Array(item.rating || 5)].map((_, i) => (
+                      <Star key={i} className="w-4 h-4 fill-[#FF5E3A] text-[#FF5E3A]" />
+                    ))}
+                  </div>
+                  <p className="text-sm text-slate-200 leading-relaxed italic">
+                    "{item.review?.en || item.review}"
+                  </p>
+                  <div className="pt-4 border-t border-white/10 flex items-center gap-3">
+                    <img
+                      src={item.avatar ? urlFor(item.avatar).width(80).url() : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb'}
+                      alt={item.name?.en || item.name}
+                      className="w-10 h-10 rounded-full object-cover border border-[#FF5E3A]"
+                    />
+                    <div>
+                      <h4 className="text-xs font-bold text-white font-heading">{item.name?.en || item.name}</h4>
+                      <p className="text-[11px] text-slate-400">{item.role?.en || item.role} — <span className="text-[#FF5E3A]">{item.company}</span></p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
       )}
+
+      {/* FAQ Section */}
+      {faqs.length > 0 && (
+        <section className="py-16 bg-[#0F1D38] border-t border-white/10 relative overflow-hidden">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center space-y-2 mb-10">
+              <span className="text-xs font-bold font-heading uppercase tracking-widest text-[#FF5E3A]">
+                Campaign FAQ
+              </span>
+              <h2 className="text-3xl font-extrabold font-heading text-white">
+                Frequently Asked Questions
+              </h2>
+            </div>
+
+            <div className="space-y-4">
+              {faqs.map((faq, idx) => {
+                const id = faq._id || `faq-${idx}`;
+                const isOpen = openFaqId === id;
+                return (
+                  <div key={id} className="rounded-2xl bg-[#091224]/80 border border-white/10 overflow-hidden">
+                    <button
+                      onClick={() => setOpenFaqId(isOpen ? null : id)}
+                      className="w-full p-5 text-start flex items-center justify-between gap-4 font-bold font-heading text-base text-white hover:text-[#FF5E3A] transition-colors"
+                    >
+                      <span>{faq.question?.en || faq.question}</span>
+                      <div className={`p-1.5 rounded-full ${isOpen ? 'bg-[#FF5E3A] text-white' : 'bg-[#2A4073]/40 text-slate-300'}`}>
+                        {isOpen ? <Minus className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                      </div>
+                    </button>
+                    <AnimatePresence>
+                      {isOpen && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          className="px-5 pb-5 text-xs sm:text-sm text-slate-300 leading-relaxed border-t border-white/5 pt-3"
+                        >
+                          {faq.answer?.en || faq.answer}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Sticky Mobile CTA Bar */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 p-3.5 bg-[#0F1D38]/95 backdrop-blur-xl border-t border-white/10 z-50 shadow-2xl">
+        <a
+          href="#lead-form-hero"
+          onClick={() => trackCtaClick('Sticky Mobile CTA', data?.pageName || slug)}
+          className="w-full py-3.5 rounded-full bg-gradient-to-r from-[#2A4073] to-[#FF5E3A] text-white font-bold font-heading text-center block shadow-glow-accent text-sm"
+        >
+          {primaryCta}
+        </a>
+      </div>
+
     </div>
   );
 };
