@@ -2,7 +2,6 @@ import { createClient } from '@sanity/client';
 import fs from 'fs';
 import path from 'path';
 
-// Parse .env manually to avoid external dependency issues
 function getEnvVars() {
   const envPath = path.join(process.cwd(), '.env');
   const envVars = { ...process.env };
@@ -35,20 +34,34 @@ const client = createClient({
 async function seed() {
   console.log(`🚀 Seeding Sanity dataset "${dataset}" for project "${projectId}"...`);
 
+  // Step 1: Delete old demo landing pages that are no longer needed
+  const oldLandingPages = ['landing-web-design', 'landing-ecommerce'];
+  for (const id of oldLandingPages) {
+    try {
+      await client.delete(id);
+      console.log(`🗑️  Deleted old landing page "${id}"`);
+    } catch {
+      console.log(`ℹ️  "${id}" already removed or not found.`);
+    }
+  }
+
+  // Step 2: Upload all seed documents (creates or replaces)
   const seedFilePath = path.join(process.cwd(), 'sanity-seed-data.ndjson');
   const fileContent = fs.readFileSync(seedFilePath, 'utf-8');
   const lines = fileContent.split('\n').filter(Boolean);
 
   for (const line of lines) {
     const doc = JSON.parse(line);
-    console.log(`Uploading document "${doc._id}" (${doc._type})...`);
+    console.log(`✅ Uploading "${doc._id}" (${doc._type})`);
     await client.createOrReplace(doc);
   }
 
-  console.log('✅ Sanity dataset seeding complete! All 6 portfolio projects and settings are live.');
+  console.log('\n🎉 Sanity dataset seeding complete!');
+  console.log('   • 6 portfolio projects published');
+  console.log('   • 1 production landing page (web-development)');
+  console.log('   • Website settings & content synced');
 }
 
 seed().catch((err) => {
-  console.error('⚠️ Seeding script notice:', err.message);
-  console.log('💡 Note: Dataset can also be updated via: npx sanity dataset import sanity-seed-data.ndjson production');
+  console.error('⚠️ Seeding error:', err.message);
 });

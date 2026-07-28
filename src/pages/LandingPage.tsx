@@ -1,14 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, CheckCircle2, Send, ShieldCheck, Zap, Star, MessageSquare, ArrowLeft, Plus, Minus, Lock, AlertCircle } from 'lucide-react';
+import { Sparkles, CheckCircle2, ArrowLeft, Plus, Minus, Lock, AlertCircle, Palette, Zap, Smartphone, Settings, Code2, HeadphonesIcon, Star } from 'lucide-react';
 import { sanityClient, urlFor } from '../lib/sanity/client';
 import { LANDING_PAGE_BY_SLUG_QUERY, TESTIMONIALS_QUERY, FAQS_QUERY } from '../lib/sanity/queries';
 import { submitLeadForm } from '../lib/sanity/submitLead';
+import { trackViewContent, trackCtaClick, trackFormStart } from '../utils/analytics';
 import { updateSeoMeta } from '../utils/seo';
 
 interface LandingPageProps {
   slug: string;
 }
+
+const featureIcons = [Palette, Zap, Smartphone, Settings, Code2, HeadphonesIcon];
 
 export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
   const [data, setData] = useState<any>(null);
@@ -28,7 +31,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
   });
 
   useEffect(() => {
-    async function fetchLandingPageData() {
+    async function fetchData() {
       try {
         const [pageRes, testRes, faqRes] = await Promise.all([
           sanityClient.fetch(LANDING_PAGE_BY_SLUG_QUERY, { slug }),
@@ -36,384 +39,248 @@ export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
           sanityClient.fetch(FAQS_QUERY),
         ]);
 
-        if (pageRes) {
-          setData(pageRes);
-          updateSeoMeta({
-            title: pageRes.seoTitle || `احصل على موقع إلكتروني احترافي | MULTIX Studio`,
-            description: pageRes.seoDescription || `نصمم ونطور مواقع إلكترونية سريعة واحترافية مخصصة لحملات الإعلانات.`,
-            canonicalUrl: pageRes.canonicalUrl,
-          });
-        } else {
-          updateSeoMeta({
-            title: `احصل على موقع إلكتروني احترافي يزيد مبيعاتك | MULTIX Studio`,
-            description: `تصميم وتطوير مواقع إلكترونية احترافية مخصصة لحملات الإعلانات.`,
-          });
-        }
+        if (pageRes) setData(pageRes);
 
-        if (testRes && testRes.length > 0) setTestimonials(testRes.slice(0, 3));
-        if (faqRes && faqRes.length > 0) setFaqs(faqRes.slice(0, 4));
+        updateSeoMeta({
+          title: pageRes?.seoTitle || 'موقع إلكتروني احترافي يليق بعلامتك التجارية | MULTIX Studio',
+          description: pageRes?.seoDescription || 'نصمم ونطور مواقع إلكترونية احترافية مخصصة بالكامل تجمع بين التصميم العصري والأداء السريع.',
+          canonicalUrl: pageRes?.canonicalUrl,
+        });
+
+        if (testRes?.length > 0) setTestimonials(testRes.slice(0, 3));
+        if (faqRes?.length > 0) setFaqs(faqRes.slice(0, 5));
+
+        trackViewContent(pageRes?.pageName || slug, 'Meta Ads Landing Page');
       } catch (err) {
-        console.warn('Error fetching landing page data:', err);
+        console.warn('Landing page fetch error:', err);
       } finally {
         setLoading(false);
       }
     }
-
-    fetchLandingPageData();
+    fetchData();
   }, [slug]);
-
-  // -------------------------------------------------------------
-  // Form Submission Success Callback / Pixel Event Hook
-  // -------------------------------------------------------------
-  const onFormSubmitSuccess = (leadDetails: any) => {
-    // Note: Add your custom Facebook Pixel or tracking events here if desired:
-    // Example:
-    // if (typeof window !== 'undefined' && (window as any).fbq) {
-    //   (window as any).fbq('track', 'Lead', leadDetails);
-    // }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setValidationError(null);
 
-    // Form Validation Checks in Arabic
-    if (!formData.name.trim()) {
-      setValidationError('يرجى إدخال الاسم.');
-      return;
-    }
-    if (!formData.phone.trim()) {
-      setValidationError('يرجى إدخال رقم الهاتف للتواصل.');
-      return;
-    }
-    if (!formData.message.trim()) {
-      setValidationError('يرجى كتابة تفاصيل الموقع أو المشروع.');
-      return;
-    }
+    if (!formData.name.trim()) return setValidationError('يرجى إدخال الاسم بالكامل.');
+    if (!formData.phone.trim()) return setValidationError('يرجى إدخال رقم الهاتف.');
+    if (!formData.message.trim()) return setValidationError('يرجى كتابة تفاصيل المشروع.');
 
     setIsSubmitting(true);
+    trackCtaClick('Landing Page Form Submit', data?.pageName || slug);
 
-    const leadInput = {
+    const result = await submitLeadForm({
       name: formData.name,
       phone: formData.phone,
-      service: data?.pageName || `حملة إعلانات: ${slug}`,
+      service: data?.pageName || `Campaign: ${slug}`,
       budget: formData.budget || 'غير محدد',
       message: formData.message,
       honeypot: formData.honeypot,
-      ctaClicked: 'نموذج طلب عرض سعر (Mobile First)',
-    };
-
-    // Save lead to Sanity CMS dataset & localStorage fallback
-    const result = await submitLeadForm(leadInput);
+      ctaClicked: 'أرسل الطلب الآن',
+    });
 
     setIsSubmitting(false);
 
     if (result.success) {
-      // Execute clean pixel callback hook
-      onFormSubmitSuccess(leadInput);
-
-      // Redirect immediately to Thank You page
       window.location.href = '/thank-you';
     } else {
-      setValidationError('حدث خطأ أثناء إرسال البيانات. يرجى المحاولة مرة أخرى.');
+      setValidationError('حدث خطأ أثناء الإرسال. يرجى المحاولة مرة أخرى.');
     }
   };
 
+  const clearError = () => { if (validationError) setValidationError(null); };
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0F1D38] flex items-center justify-center text-white font-sans" dir="rtl">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 border-2 border-[#FF5E3A] border-t-transparent rounded-full animate-spin" />
-          <span className="text-sm font-semibold tracking-wider">جاري تحميل الصفحة...</span>
+      <div className="min-h-screen bg-[#0F1D38] flex items-center justify-center" dir="rtl">
+        <div className="flex items-center gap-3 text-white">
+          <div className="w-7 h-7 border-2 border-[#FF5E3A] border-t-transparent rounded-full animate-spin" />
+          <span className="text-sm font-medium">جاري تحميل الصفحة...</span>
         </div>
       </div>
     );
   }
 
-  // Full Arabic Hero Copy
-  const heroTitle =
-    data?.heroTitle?.ar ||
-    data?.heroTitle?.en ||
-    '🚀 احصل على موقع إلكتروني احترافي يزيد مبيعاتك ويحول الزوار إلى عملاء';
+  const heroTitle = data?.heroTitle?.ar || 'موقع إلكتروني احترافي يليق بعلامتك التجارية';
+  const heroSubtitle = data?.heroSubtitle?.ar || 'نصمم ونطور مواقع إلكترونية احترافية مخصصة بالكامل، تجمع بين التصميم العصري، الأداء السريع، وسهولة الاستخدام، لتساعدك على عرض خدماتك وبناء حضور قوي على الإنترنت.';
+  const ctaText = data?.primaryCtaText?.ar || 'أرسل الطلب الآن';
 
-  const heroSubtitle =
-    data?.heroSubtitle?.ar ||
-    data?.heroSubtitle?.en ||
-    'نصمم ونطور مواقع إلكترونية سريعة، احترافية، ومتوافقة مع جميع الأجهزة، مع تجربة مستخدم مميزة تساعدك على زيادة العملاء وتحقيق أفضل نتائج من حملاتك الإعلانية.';
-
-  const primaryCta = data?.primaryCtaText?.ar || data?.primaryCtaText?.en || 'ارسل الطلب الآن';
-
-  const highlights = [
-    'تصميم احترافي مخصص بالكامل',
-    'متوافق مع جميع الأجهزة والهواتف',
-    'تتبع دقيق للتحويلات والأداء',
-    'سرعة فائقة في التحميل',
-    'تحسين محركات البحث (SEO)',
-    'تسليم سريع خلال 7 أيام',
+  const features = [
+    'تصميم مخصص بالكامل',
+    'سرعة تحميل وأداء عالي',
+    'متوافق مع جميع الأجهزة',
+    'لوحة تحكم سهلة لإدارة المحتوى',
+    'كود نظيف وقابل للتطوير',
+    'دعم فني بعد التسليم',
   ];
 
   return (
-    <div dir="rtl" className="min-h-screen bg-[#0F1D38] text-slate-100 selection:bg-[#FF5E3A] selection:text-white font-sans antialiased overflow-x-hidden relative">
-      
-      {/* Top Header Bar */}
-      <header className="py-4 px-4 sm:px-8 border-b border-white/10 bg-[#0F1D38]/90 backdrop-blur-xl sticky top-0 z-50 shadow-lg">
+    <div dir="rtl" className="min-h-screen bg-[#0F1D38] text-slate-100 selection:bg-[#FF5E3A] selection:text-white font-sans antialiased overflow-x-hidden">
+
+      {/* ── Header ── */}
+      <header className="py-4 px-4 sm:px-8 border-b border-white/10 bg-[#0F1D38]/90 backdrop-blur-xl sticky top-0 z-50">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <a href="/" className="text-xl font-black tracking-wider text-white flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#2A4073] to-[#FF5E3A] p-[1px] shadow-glow-accent">
-              <div className="w-full h-full bg-[#0F1D38] rounded-[11px] flex items-center justify-center">
-                <Sparkles className="w-4 h-4 text-[#FF5E3A]" />
+          <a href="/" className="text-lg font-black tracking-wider text-white flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#2A4073] to-[#FF5E3A] p-[1px]">
+              <div className="w-full h-full bg-[#0F1D38] rounded-[7px] flex items-center justify-center">
+                <Sparkles className="w-3.5 h-3.5 text-[#FF5E3A]" />
               </div>
             </div>
-            <span>
-              MULTIX<span className="text-[#FF5E3A]">.</span>
-            </span>
+            MULTIX<span className="text-[#FF5E3A]">.</span>
           </a>
-
           <a
-            href="#lead-form-hero"
-            className="px-4 py-2 sm:px-5 sm:py-2.5 rounded-full bg-gradient-to-r from-[#2A4073] to-[#FF5E3A] text-white text-xs font-bold shadow-glow-accent hover:shadow-[0_0_25px_#FF5E3A] transition-all"
+            href="#lead-form"
+            onClick={() => trackCtaClick('Header CTA', data?.pageName)}
+            className="px-4 py-2 rounded-full bg-gradient-to-r from-[#2A4073] to-[#FF5E3A] text-white text-xs font-bold hover:shadow-[0_0_20px_#FF5E3A] transition-all"
           >
-            {primaryCta}
+            {ctaText}
           </a>
         </div>
       </header>
 
-      {/* Main Hero & Lead Form Section */}
-      <section className="py-6 sm:py-16 relative overflow-hidden">
-        {/* Ambient Radial Lights */}
-        <div className="absolute top-1/4 right-10 w-[500px] h-[500px] bg-[#2A4073]/25 rounded-full blur-[160px] pointer-events-none" />
-        <div className="absolute top-1/3 left-10 w-[500px] h-[500px] bg-[#FF5E3A]/15 rounded-full blur-[150px] pointer-events-none" />
+      {/* ── Hero Section ── */}
+      <section className="relative overflow-hidden">
+        {/* Ambient Glow */}
+        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-[#2A4073]/20 rounded-full blur-[180px] pointer-events-none -translate-y-1/3" />
+        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-[#FF5E3A]/10 rounded-full blur-[160px] pointer-events-none translate-y-1/4" />
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
-          
-          {/* MOBILE FIRST: Lead Capture Form is FIRST on mobile (order-1) above all other content */}
-          
-          {/* 1. Lead Capture Form Box (Above The Fold on Mobile) */}
-          <div id="lead-form-hero" className="order-1 lg:order-2 lg:col-span-5 w-full">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.97, y: 15 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-              className="p-6 sm:p-8 rounded-3xl bg-[#0F1D38]/95 border border-white/15 backdrop-blur-2xl shadow-2xl space-y-5 relative border-t-4 border-t-[#FF5E3A]"
-            >
-              <div className="space-y-1 text-start">
-                <span className="text-[11px] sm:text-xs font-bold uppercase tracking-widest text-[#FF5E3A]">
-                  احصل على استشارة مجانية وعرض سعر
-                </span>
-                <h3 className="text-xl sm:text-2xl font-bold text-white leading-snug">
-                  طلب عرض سعر وخطة عمل لمشروعك
-                </h3>
-                <p className="text-xs text-slate-400">
-                  أدخل بياناتك وسيقوم أحد خبراء التطوير بالتواصل معك خلال أقل من 12 ساعة.
-                </p>
-              </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 py-8 sm:py-14 lg:py-20">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 items-start">
 
-              {/* Validation Alert */}
-              {validationError && (
-                <div className="p-3 rounded-xl bg-[#FF5E3A]/20 border border-[#FF5E3A]/40 text-[#FF5E3A] text-xs font-semibold flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 shrink-0" />
-                  <span>{validationError}</span>
-                </div>
-              )}
+            {/* ── Form Column (Mobile First: order-1) ── */}
+            <div id="lead-form" className="order-1 lg:order-2 lg:col-span-5">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+                className="rounded-3xl bg-gradient-to-b from-[#0F1D38] to-[#091224] border border-white/10 shadow-2xl overflow-hidden"
+              >
+                {/* Form Header Accent Bar */}
+                <div className="h-1 bg-gradient-to-l from-[#2A4073] to-[#FF5E3A]" />
 
-              <form onSubmit={handleSubmit} className="space-y-3.5 text-start">
-                {/* Honeypot Spam Protection Check */}
-                <input
-                  type="text"
-                  name="honeypot"
-                  value={formData.honeypot}
-                  onChange={(e) => setFormData({ ...formData, honeypot: e.target.value })}
-                  style={{ display: 'none' }}
-                  tabIndex={-1}
-                  autoComplete="off"
-                />
-
-                {/* 1. Name (الاسم) */}
-                <div>
-                  <label className="block text-xs font-bold tracking-wider text-slate-300 mb-1">
-                    الاسم *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.name}
-                    onChange={(e) => {
-                      setFormData({ ...formData, name: e.target.value });
-                      if (validationError) setValidationError(null);
-                    }}
-                    placeholder="أدخل اسمك الكامل"
-                    className="w-full px-4 py-3 rounded-2xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-[#FF5E3A] transition-colors text-sm"
-                  />
-                </div>
-
-                {/* 2. Phone Number (رقم الهاتف) */}
-                <div>
-                  <label className="block text-xs font-bold tracking-wider text-slate-300 mb-1">
-                    رقم الهاتف *
-                  </label>
-                  <input
-                    type="tel"
-                    required
-                    value={formData.phone}
-                    onChange={(e) => {
-                      setFormData({ ...formData, phone: e.target.value });
-                      if (validationError) setValidationError(null);
-                    }}
-                    placeholder="+966 50 000 0000"
-                    dir="ltr"
-                    className="w-full px-4 py-3 rounded-2xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-[#FF5E3A] transition-colors text-sm text-right"
-                  />
-                </div>
-
-                {/* 3. Project/Order Details (تفاصيل الموقع أو المشروع) */}
-                <div>
-                  <label className="block text-xs font-bold tracking-wider text-slate-300 mb-1">
-                    تفاصيل الموقع أو المشروع *
-                  </label>
-                  <textarea
-                    rows={3}
-                    required
-                    value={formData.message}
-                    onChange={(e) => {
-                      setFormData({ ...formData, message: e.target.value });
-                      if (validationError) setValidationError(null);
-                    }}
-                    placeholder="اكتب نبذة مختصرة عن نوع الموقع والأهداف المطلوب تحقيقها..."
-                    className="w-full px-4 py-3 rounded-2xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-[#FF5E3A] transition-colors resize-none text-sm"
-                  />
-                </div>
-
-                {/* 4. Budget (الميزانية) - Optional */}
-                <div>
-                  <label className="block text-xs font-bold tracking-wider text-slate-400 mb-1">
-                    الميزانية (اختياري)
-                  </label>
-                  <select
-                    value={formData.budget}
-                    onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
-                    className="w-full px-4 py-3 rounded-2xl bg-[#0F1D38] border border-white/10 text-slate-200 focus:outline-none focus:border-[#FF5E3A] transition-colors text-sm"
-                  >
-                    <option value="">حدد الميزانية المناسبة لمشروعك</option>
-                    <option value="10k-20k">10,000 $ – 20,000 $</option>
-                    <option value="20k-50k">20,000 $ – 50,000 $</option>
-                    <option value="50k+">أكثر من 50,000 $</option>
-                  </select>
-                </div>
-
-                {/* Submit Button */}
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-[#2A4073] to-[#FF5E3A] text-white font-bold text-center shadow-glow-accent hover:shadow-[0_0_35px_#FF5E3A] transition-all flex items-center justify-center gap-2 text-base mt-2"
-                >
-                  {isSubmitting ? (
-                    <span>جاري إرسال الطلب...</span>
-                  ) : (
-                    <>
-                      <span>ارسل الطلب الآن</span>
-                      <ArrowLeft className="w-5 h-5" />
-                    </>
-                  )}
-                </button>
-
-                <p className="text-[11px] text-slate-400 text-center pt-1 flex items-center justify-center gap-1.5">
-                  <Lock className="w-3.5 h-3.5 text-[#FF5E3A]" /> بياناتك آمنة ومحمية 100%. لا نرسل رسائل مزعجة.
-                </p>
-              </form>
-            </motion.div>
-          </div>
-
-          {/* 2. Persuasive Arabic Copy & Feature Highlights (Order 2 on mobile, Order 1 on desktop) */}
-          <div className="order-2 lg:order-1 lg:col-span-7 space-y-6 text-center lg:text-start">
-            
-            {/* Offer Badge */}
-            <motion.div
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#FF5E3A]/20 border border-[#FF5E3A]/40 text-[#FF5E3A] text-xs font-bold shadow-sm"
-            >
-              <Sparkles className="w-4 h-4" /> عرض حصري للمشاريع الجديدة 2026
-            </motion.div>
-
-            {/* Refined Headline */}
-            <motion.h1
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.1 }}
-              className="text-2xl sm:text-4xl lg:text-5xl font-black text-white leading-[1.25] tracking-tight max-w-2xl mx-auto lg:mx-0"
-            >
-              {heroTitle}
-            </motion.h1>
-
-            {/* Refined Subheadline */}
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="text-slate-300 text-sm sm:text-base leading-relaxed max-w-xl mx-auto lg:mx-0 font-normal"
-            >
-              {heroSubtitle}
-            </motion.p>
-
-            {/* Feature Highlights Cards Grid */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-              className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-2 text-start max-w-2xl mx-auto lg:mx-0"
-            >
-              {highlights.map((item, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-center gap-3.5 p-3.5 rounded-2xl bg-[#091224]/80 border border-white/10 hover:border-[#FF5E3A]/40 transition-all shadow-sm"
-                >
-                  <div className="w-8 h-8 rounded-xl bg-[#FF5E3A]/15 flex items-center justify-center shrink-0 text-[#FF5E3A]">
-                    <CheckCircle2 className="w-4 h-4" />
+                <div className="p-6 sm:p-8 space-y-5">
+                  <div className="space-y-1.5">
+                    <h3 className="text-lg sm:text-xl font-bold text-white leading-snug">
+                      اطلب عرض سعر وخطة تنفيذ لمشروعك
+                    </h3>
+                    <p className="text-xs text-slate-400 leading-relaxed">
+                      املأ البيانات وسنتواصل معك خلال أقل من 12 ساعة.
+                    </p>
                   </div>
-                  <span className="text-xs font-semibold text-slate-200 leading-snug">{item}</span>
+
+                  {validationError && (
+                    <div className="p-3 rounded-xl bg-[#FF5E3A]/15 border border-[#FF5E3A]/30 text-[#FF5E3A] text-xs font-medium flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4 shrink-0" />
+                      <span>{validationError}</span>
+                    </div>
+                  )}
+
+                  <form onSubmit={handleSubmit} className="space-y-3">
+                    <input type="text" name="honeypot" value={formData.honeypot} onChange={(e) => setFormData({ ...formData, honeypot: e.target.value })} style={{ display: 'none' }} tabIndex={-1} autoComplete="off" />
+
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-400 mb-1">الاسم بالكامل *</label>
+                      <input type="text" required onFocus={trackFormStart} value={formData.name} onChange={(e) => { setFormData({ ...formData, name: e.target.value }); clearError(); }} placeholder="أدخل اسمك الكامل" className="w-full px-4 py-3 rounded-xl bg-white/[0.04] border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-[#FF5E3A]/60 focus:bg-white/[0.06] transition-all text-sm" />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-400 mb-1">رقم الهاتف *</label>
+                      <input type="tel" required value={formData.phone} onChange={(e) => { setFormData({ ...formData, phone: e.target.value }); clearError(); }} placeholder="+966 50 000 0000" dir="ltr" className="w-full px-4 py-3 rounded-xl bg-white/[0.04] border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-[#FF5E3A]/60 focus:bg-white/[0.06] transition-all text-sm text-right" />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-400 mb-1">تفاصيل المشروع *</label>
+                      <textarea rows={3} required value={formData.message} onChange={(e) => { setFormData({ ...formData, message: e.target.value }); clearError(); }} placeholder="اكتب نبذة عن مشروعك واحتياجاتك..." className="w-full px-4 py-3 rounded-xl bg-white/[0.04] border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-[#FF5E3A]/60 focus:bg-white/[0.06] transition-all resize-none text-sm" />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-500 mb-1">الميزانية التقريبية (اختياري)</label>
+                      <select value={formData.budget} onChange={(e) => setFormData({ ...formData, budget: e.target.value })} className="w-full px-4 py-3 rounded-xl bg-[#0F1D38] border border-white/10 text-slate-300 focus:outline-none focus:border-[#FF5E3A]/60 transition-all text-sm appearance-none">
+                        <option value="">اختر الميزانية المناسبة</option>
+                        <option value="5k-10k">5,000 $ – 10,000 $</option>
+                        <option value="10k-20k">10,000 $ – 20,000 $</option>
+                        <option value="20k-50k">20,000 $ – 50,000 $</option>
+                        <option value="50k+">أكثر من 50,000 $</option>
+                      </select>
+                    </div>
+
+                    <button type="submit" disabled={isSubmitting} className="w-full py-3.5 rounded-xl bg-gradient-to-r from-[#2A4073] to-[#FF5E3A] text-white font-bold text-center hover:shadow-[0_0_30px_#FF5E3A] transition-all flex items-center justify-center gap-2 text-sm mt-1">
+                      {isSubmitting ? 'جاري الإرسال...' : (
+                        <>
+                          <span>{ctaText}</span>
+                          <ArrowLeft className="w-4 h-4" />
+                        </>
+                      )}
+                    </button>
+
+                    <p className="text-[10px] text-slate-500 text-center flex items-center justify-center gap-1">
+                      <Lock className="w-3 h-3" /> بياناتك آمنة ولن تتم مشاركتها مع أي جهة.
+                    </p>
+                  </form>
                 </div>
-              ))}
-            </motion.div>
+              </motion.div>
+            </div>
+
+            {/* ── Copy Column (Mobile: order-2, Desktop: order-1) ── */}
+            <div className="order-2 lg:order-1 lg:col-span-7 space-y-8">
+
+              {/* Badge */}
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#FF5E3A]/15 border border-[#FF5E3A]/30 text-[#FF5E3A] text-xs font-semibold">
+                <Sparkles className="w-3.5 h-3.5" /> عرض خاص لفترة محدودة
+              </motion.div>
+
+              {/* Headline */}
+              <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.05 }} className="text-3xl sm:text-4xl lg:text-[2.75rem] font-black text-white leading-[1.2] max-w-xl">
+                {heroTitle}
+              </motion.h1>
+
+              {/* Description */}
+              <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }} className="text-slate-300/90 text-sm sm:text-base leading-[1.8] max-w-lg">
+                {heroSubtitle}
+              </motion.p>
+
+              {/* Feature Cards */}
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.15 }} className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg">
+                {features.map((label, idx) => {
+                  const Icon = featureIcons[idx];
+                  return (
+                    <div key={idx} className="flex items-center gap-3.5 p-4 rounded-2xl bg-[#091224]/70 border border-white/[0.07] hover:border-[#FF5E3A]/30 transition-colors group">
+                      <div className="w-9 h-9 rounded-xl bg-[#FF5E3A]/10 flex items-center justify-center shrink-0 group-hover:bg-[#FF5E3A]/20 transition-colors">
+                        <Icon className="w-4 h-4 text-[#FF5E3A]" />
+                      </div>
+                      <span className="text-[13px] font-medium text-slate-200">{label}</span>
+                    </div>
+                  );
+                })}
+              </motion.div>
+            </div>
 
           </div>
-
         </div>
       </section>
 
-      {/* Social Proof & Testimonials Section */}
+      {/* ── Testimonials ── */}
       {testimonials.length > 0 && (
-        <section className="py-16 bg-[#091224] border-t border-white/10 relative overflow-hidden">
+        <section className="py-16 bg-[#091224] border-t border-white/[0.06]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center space-y-2 mb-12">
-              <span className="text-xs font-bold uppercase tracking-widest text-[#FF5E3A]">
-                آراء عملائنا
-              </span>
-              <h2 className="text-3xl font-extrabold text-white">
-                ثقة الشركات والعلامات التجارية الرائدة
-              </h2>
+              <span className="text-xs font-semibold uppercase tracking-widest text-[#FF5E3A]">آراء عملائنا</span>
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-white">ثقة الشركات والعلامات التجارية</h2>
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {testimonials.map((item, idx) => (
-                <div key={item._id || idx} className="p-6 rounded-3xl bg-[#0F1D38]/80 border border-white/10 space-y-4 text-start">
-                  <div className="flex items-center gap-1">
-                    {[...Array(item.rating || 5)].map((_, i) => (
-                      <Star key={i} className="w-4 h-4 fill-[#FF5E3A] text-[#FF5E3A]" />
-                    ))}
+                <div key={item._id || idx} className="p-5 rounded-2xl bg-[#0F1D38]/80 border border-white/[0.07] space-y-3 text-start">
+                  <div className="flex items-center gap-0.5">
+                    {[...Array(item.rating || 5)].map((_, i) => <Star key={i} className="w-3.5 h-3.5 fill-[#FF5E3A] text-[#FF5E3A]" />)}
                   </div>
-                  <p className="text-sm text-slate-200 leading-relaxed italic">
-                    "{item.review?.ar || item.review?.en || item.review}"
-                  </p>
-                  <div className="pt-4 border-t border-white/10 flex items-center gap-3">
-                    <img
-                      src={item.avatar ? urlFor(item.avatar).width(80).url() : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb'}
-                      alt={item.name?.ar || item.name?.en || item.name}
-                      className="w-10 h-10 rounded-full object-cover border border-[#FF5E3A]"
-                    />
+                  <p className="text-sm text-slate-200/90 leading-relaxed">"{item.review?.ar || item.review?.en || item.review}"</p>
+                  <div className="pt-3 border-t border-white/[0.06] flex items-center gap-3">
+                    <img src={item.avatar ? urlFor(item.avatar).width(80).url() : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb'} alt="" className="w-9 h-9 rounded-full object-cover border border-white/10" />
                     <div>
                       <h4 className="text-xs font-bold text-white">{item.name?.ar || item.name?.en || item.name}</h4>
-                      <p className="text-[11px] text-slate-400">{item.role?.ar || item.role?.en || item.role} — <span className="text-[#FF5E3A]">{item.company}</span></p>
+                      <p className="text-[10px] text-slate-400">{item.role?.ar || item.role?.en || item.role} — <span className="text-[#FF5E3A]">{item.company}</span></p>
                     </div>
                   </div>
                 </div>
@@ -423,42 +290,29 @@ export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
         </section>
       )}
 
-      {/* FAQ Section */}
+      {/* ── FAQ ── */}
       {faqs.length > 0 && (
-        <section className="py-16 bg-[#0F1D38] border-t border-white/10 relative overflow-hidden">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <section className="py-16 border-t border-white/[0.06]">
+          <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center space-y-2 mb-10">
-              <span className="text-xs font-bold uppercase tracking-widest text-[#FF5E3A]">
-                الأسئلة الشائعة
-              </span>
-              <h2 className="text-3xl font-extrabold text-white">
-                إجابات على استفساراتك قبل البدء
-              </h2>
+              <span className="text-xs font-semibold uppercase tracking-widest text-[#FF5E3A]">الأسئلة الشائعة</span>
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-white">إجابات على استفساراتك</h2>
             </div>
-
-            <div className="space-y-4">
+            <div className="space-y-3">
               {faqs.map((faq, idx) => {
                 const id = faq._id || `faq-${idx}`;
                 const isOpen = openFaqId === id;
                 return (
-                  <div key={id} className="rounded-2xl bg-[#091224]/80 border border-white/10 overflow-hidden">
-                    <button
-                      onClick={() => setOpenFaqId(isOpen ? null : id)}
-                      className="w-full p-5 text-start flex items-center justify-between gap-4 font-bold text-base text-white hover:text-[#FF5E3A] transition-colors"
-                    >
+                  <div key={id} className="rounded-2xl bg-[#091224]/70 border border-white/[0.07] overflow-hidden">
+                    <button onClick={() => setOpenFaqId(isOpen ? null : id)} className="w-full p-4 sm:p-5 text-start flex items-center justify-between gap-3 font-semibold text-sm text-white hover:text-[#FF5E3A] transition-colors">
                       <span>{faq.question?.ar || faq.question?.en || faq.question}</span>
-                      <div className={`p-1.5 rounded-full ${isOpen ? 'bg-[#FF5E3A] text-[#FFF]' : 'bg-[#2A4073]/40 text-slate-300'}`}>
-                        {isOpen ? <Minus className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                      <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${isOpen ? 'bg-[#FF5E3A] text-white' : 'bg-white/[0.06] text-slate-400'}`}>
+                        {isOpen ? <Minus className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
                       </div>
                     </button>
                     <AnimatePresence>
                       {isOpen && (
-                        <motion.div
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: 'auto', opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          className="px-5 pb-5 text-xs sm:text-sm text-slate-300 leading-relaxed border-t border-white/5 pt-3 text-start"
-                        >
+                        <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="px-4 sm:px-5 pb-4 sm:pb-5 text-xs sm:text-sm text-slate-300/90 leading-relaxed border-t border-white/[0.04] pt-3">
                           {faq.answer?.ar || faq.answer?.en || faq.answer}
                         </motion.div>
                       )}
@@ -471,13 +325,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
         </section>
       )}
 
-      {/* Sticky Mobile CTA Bar */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 p-3.5 bg-[#0F1D38]/95 backdrop-blur-xl border-t border-white/10 z-50 shadow-2xl">
-        <a
-          href="#lead-form-hero"
-          className="w-full py-3.5 rounded-full bg-gradient-to-r from-[#2A4073] to-[#FF5E3A] text-white font-bold text-center block shadow-glow-accent text-sm"
-        >
-          {primaryCta}
+      {/* ── Sticky Mobile CTA ── */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 p-3 bg-[#0F1D38]/95 backdrop-blur-xl border-t border-white/10 z-50">
+        <a href="#lead-form" onClick={() => trackCtaClick('Sticky Mobile CTA', data?.pageName)} className="w-full py-3 rounded-full bg-gradient-to-r from-[#2A4073] to-[#FF5E3A] text-white font-bold text-center block text-sm">
+          {ctaText}
         </a>
       </div>
 
