@@ -4,7 +4,6 @@ import { Sparkles, CheckCircle2, Send, ShieldCheck, Zap, Star, MessageSquare, Ar
 import { sanityClient, urlFor } from '../lib/sanity/client';
 import { LANDING_PAGE_BY_SLUG_QUERY, TESTIMONIALS_QUERY, FAQS_QUERY } from '../lib/sanity/queries';
 import { submitLeadForm } from '../lib/sanity/submitLead';
-import { trackViewContent, trackCtaClick, trackFormStart } from '../utils/analytics';
 import { updateSeoMeta } from '../utils/seo';
 
 interface LandingPageProps {
@@ -41,21 +40,18 @@ export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
           setData(pageRes);
           updateSeoMeta({
             title: pageRes.seoTitle || `احصل على موقع إلكتروني احترافي | MULTIX Studio`,
-            description: pageRes.seoDescription || `نصمم ونطور مواقع إلكترونية سريعة واحترافية مخصصة لحملات Meta Ads.`,
+            description: pageRes.seoDescription || `نصمم ونطور مواقع إلكترونية سريعة واحترافية مخصصة لحملات الإعلانات.`,
             canonicalUrl: pageRes.canonicalUrl,
           });
         } else {
           updateSeoMeta({
             title: `احصل على موقع إلكتروني احترافي يزيد مبيعاتك | MULTIX Studio`,
-            description: `تصميم وتطوير مواقع إلكترونية احترافية مخصصة لحملات Meta Ads.`,
+            description: `تصميم وتطوير مواقع إلكترونية احترافية مخصصة لحملات الإعلانات.`,
           });
         }
 
         if (testRes && testRes.length > 0) setTestimonials(testRes.slice(0, 3));
         if (faqRes && faqRes.length > 0) setFaqs(faqRes.slice(0, 4));
-
-        // Fire PageView & ViewContent analytics event on load
-        trackViewContent(pageRes?.pageName || `حملة إعلانات: ${slug}`, 'Meta Ads Campaign Landing Page');
       } catch (err) {
         console.warn('Error fetching landing page data:', err);
       } finally {
@@ -66,41 +62,56 @@ export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
     fetchLandingPageData();
   }, [slug]);
 
+  // -------------------------------------------------------------
+  // Form Submission Success Callback / Pixel Event Hook
+  // -------------------------------------------------------------
+  const onFormSubmitSuccess = (leadDetails: any) => {
+    // Note: Add your custom Facebook Pixel or tracking events here if desired:
+    // Example:
+    // if (typeof window !== 'undefined' && (window as any).fbq) {
+    //   (window as any).fbq('track', 'Lead', leadDetails);
+    // }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setValidationError(null);
 
-    // Validation Check in Arabic
+    // Form Validation Checks in Arabic
     if (!formData.name.trim()) {
-      setValidationError('يرجى إدخال الاسم الكامل.');
+      setValidationError('يرجى إدخال الاسم.');
       return;
     }
     if (!formData.phone.trim()) {
-      setValidationError('يرجى إدخال رقم الهاتف / الواتساب للتواصل.');
+      setValidationError('يرجى إدخال رقم الهاتف للتواصل.');
       return;
     }
     if (!formData.message.trim()) {
-      setValidationError('يرجى كتابة تفاصيل مشروعك واحتياجاتك.');
+      setValidationError('يرجى كتابة تفاصيل الموقع أو المشروع.');
       return;
     }
 
     setIsSubmitting(true);
-    trackCtaClick('Meta Ads Campaign Form Submit', data?.pageName || slug);
 
-    // Save lead in Sanity & fire standard Meta Pixel 'Lead' event + GA4 generate_lead
-    const result = await submitLeadForm({
+    const leadInput = {
       name: formData.name,
       phone: formData.phone,
       service: data?.pageName || `حملة إعلانات: ${slug}`,
       budget: formData.budget || 'غير محدد',
       message: formData.message,
       honeypot: formData.honeypot,
-      ctaClicked: 'نموذج طلب عرض سعر Meta Ads (Mobile First)',
-    });
+      ctaClicked: 'نموذج طلب عرض سعر (Mobile First)',
+    };
+
+    // Save lead to Sanity CMS dataset & localStorage fallback
+    const result = await submitLeadForm(leadInput);
 
     setIsSubmitting(false);
 
     if (result.success) {
+      // Execute clean pixel callback hook
+      onFormSubmitSuccess(leadInput);
+
       // Redirect immediately to Thank You page
       window.location.href = '/thank-you';
     } else {
@@ -119,7 +130,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
     );
   }
 
-  // Arabic Hero Copy
+  // Full Arabic Hero Copy
   const heroTitle =
     data?.heroTitle?.ar ||
     data?.heroTitle?.en ||
@@ -128,15 +139,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
   const heroSubtitle =
     data?.heroSubtitle?.ar ||
     data?.heroSubtitle?.en ||
-    'نصمم ونطور مواقع إلكترونية سريعة، احترافية، ومتوافقة مع جميع الأجهزة، مع تجربة مستخدم مميزة تساعدك على زيادة العملاء وتحقيق أفضل نتائج من حملات Meta Ads.';
+    'نصمم ونطور مواقع إلكترونية سريعة، احترافية، ومتوافقة مع جميع الأجهزة، مع تجربة مستخدم مميزة تساعدك على زيادة العملاء وتحقيق أفضل نتائج من حملاتك الإعلانية.';
 
-  const primaryCta = data?.primaryCtaText?.ar || data?.primaryCtaText?.en || 'احصل على عرض سعر مجاناً';
+  const primaryCta = data?.primaryCtaText?.ar || data?.primaryCtaText?.en || 'ارسل الطلب الآن';
 
   const highlights = [
     'تصميم احترافي مخصص بالكامل',
-    'متوافق مع جميع الأجهزة',
-    'ربط Meta Pixel وتتبع التحويلات',
-    'سرعة وأداء عالي',
+    'متوافق مع جميع الأجهزة والهواتف',
+    'تتبع دقيق للتحويلات والأداء',
+    'سرعة فائقة في التحميل',
     'تحسين محركات البحث (SEO)',
     'تسليم سريع خلال 7 أيام',
   ];
@@ -144,7 +155,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
   return (
     <div dir="rtl" className="min-h-screen bg-[#0F1D38] text-slate-100 selection:bg-[#FF5E3A] selection:text-white font-sans antialiased overflow-x-hidden relative">
       
-      {/* Top Header Navigation Bar */}
+      {/* Top Header Bar */}
       <header className="py-4 px-4 sm:px-8 border-b border-white/10 bg-[#0F1D38]/90 backdrop-blur-xl sticky top-0 z-50 shadow-lg">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <a href="/" className="text-xl font-black tracking-wider text-white flex items-center gap-2.5">
@@ -160,7 +171,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
 
           <a
             href="#lead-form-hero"
-            onClick={() => trackCtaClick('Top Header CTA', data?.pageName)}
             className="px-4 py-2 sm:px-5 sm:py-2.5 rounded-full bg-gradient-to-r from-[#2A4073] to-[#FF5E3A] text-white text-xs font-bold shadow-glow-accent hover:shadow-[0_0_25px_#FF5E3A] transition-all"
           >
             {primaryCta}
@@ -169,16 +179,16 @@ export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
       </header>
 
       {/* Main Hero & Lead Form Section */}
-      <section className="py-8 sm:py-16 relative overflow-hidden">
+      <section className="py-6 sm:py-16 relative overflow-hidden">
         {/* Ambient Radial Lights */}
         <div className="absolute top-1/4 right-10 w-[500px] h-[500px] bg-[#2A4073]/25 rounded-full blur-[160px] pointer-events-none" />
         <div className="absolute top-1/3 left-10 w-[500px] h-[500px] bg-[#FF5E3A]/15 rounded-full blur-[150px] pointer-events-none" />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
           
-          {/* MOBILE FIRST: Form is FIRST on mobile (order-1), copy is SECOND (order-2). Desktop maintains natural RTL layout */}
+          {/* MOBILE FIRST: Lead Capture Form is FIRST on mobile (order-1) above all other content */}
           
-          {/* 1. Lead Capture Form Box (First thing on Mobile above the fold) */}
+          {/* 1. Lead Capture Form Box (Above The Fold on Mobile) */}
           <div id="lead-form-hero" className="order-1 lg:order-2 lg:col-span-5 w-full">
             <motion.div
               initial={{ opacity: 0, scale: 0.97, y: 15 }}
@@ -198,7 +208,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
                 </p>
               </div>
 
-              {/* Validation Warning Alert */}
+              {/* Validation Alert */}
               {validationError && (
                 <div className="p-3 rounded-xl bg-[#FF5E3A]/20 border border-[#FF5E3A]/40 text-[#FF5E3A] text-xs font-semibold flex items-center gap-2">
                   <AlertCircle className="w-4 h-4 shrink-0" />
@@ -218,15 +228,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
                   autoComplete="off"
                 />
 
-                {/* 1. Full Name (Required) */}
+                {/* 1. Name (الاسم) */}
                 <div>
                   <label className="block text-xs font-bold tracking-wider text-slate-300 mb-1">
-                    الاسم الكامل *
+                    الاسم *
                   </label>
                   <input
                     type="text"
                     required
-                    onFocus={trackFormStart}
                     value={formData.name}
                     onChange={(e) => {
                       setFormData({ ...formData, name: e.target.value });
@@ -237,10 +246,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
                   />
                 </div>
 
-                {/* 2. Phone Number (Required) */}
+                {/* 2. Phone Number (رقم الهاتف) */}
                 <div>
                   <label className="block text-xs font-bold tracking-wider text-slate-300 mb-1">
-                    رقم الهاتف / الواتساب *
+                    رقم الهاتف *
                   </label>
                   <input
                     type="tel"
@@ -256,10 +265,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
                   />
                 </div>
 
-                {/* 3. Project Details (Required) */}
+                {/* 3. Project/Order Details (تفاصيل الموقع أو المشروع) */}
                 <div>
                   <label className="block text-xs font-bold tracking-wider text-slate-300 mb-1">
-                    تفاصيل مشروعك واحتياجاتك *
+                    تفاصيل الموقع أو المشروع *
                   </label>
                   <textarea
                     rows={3}
@@ -274,10 +283,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
                   />
                 </div>
 
-                {/* 4. Budget (Optional) */}
+                {/* 4. Budget (الميزانية) - Optional */}
                 <div>
                   <label className="block text-xs font-bold tracking-wider text-slate-400 mb-1">
-                    الميزانية التقديرية (اختياري)
+                    الميزانية (اختياري)
                   </label>
                   <select
                     value={formData.budget}
@@ -301,7 +310,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
                     <span>جاري إرسال الطلب...</span>
                   ) : (
                     <>
-                      <span>{primaryCta}</span>
+                      <span>ارسل الطلب الآن</span>
                       <ArrowLeft className="w-5 h-5" />
                     </>
                   )}
@@ -314,7 +323,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
             </motion.div>
           </div>
 
-          {/* 2. Persuasive Arabic Copy & Refined Feature Cards (Order 2 on mobile, order 1 on desktop) */}
+          {/* 2. Persuasive Arabic Copy & Feature Highlights (Order 2 on mobile, Order 1 on desktop) */}
           <div className="order-2 lg:order-1 lg:col-span-7 space-y-6 text-center lg:text-start">
             
             {/* Offer Badge */}
@@ -324,10 +333,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
               transition={{ duration: 0.5 }}
               className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#FF5E3A]/20 border border-[#FF5E3A]/40 text-[#FF5E3A] text-xs font-bold shadow-sm"
             >
-              <Sparkles className="w-4 h-4" /> عرض حصري لحملات الإعلانات 2026
+              <Sparkles className="w-4 h-4" /> عرض حصري للمشاريع الجديدة 2026
             </motion.div>
 
-            {/* Refined Headline (Balanced line height & size) */}
+            {/* Refined Headline */}
             <motion.h1
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -347,7 +356,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
               {heroSubtitle}
             </motion.p>
 
-            {/* Enhanced Feature Highlights Cards Grid */}
+            {/* Feature Highlights Cards Grid */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -466,7 +475,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({ slug }) => {
       <div className="lg:hidden fixed bottom-0 left-0 right-0 p-3.5 bg-[#0F1D38]/95 backdrop-blur-xl border-t border-white/10 z-50 shadow-2xl">
         <a
           href="#lead-form-hero"
-          onClick={() => trackCtaClick('Sticky Mobile CTA', data?.pageName || slug)}
           className="w-full py-3.5 rounded-full bg-gradient-to-r from-[#2A4073] to-[#FF5E3A] text-white font-bold text-center block shadow-glow-accent text-sm"
         >
           {primaryCta}
